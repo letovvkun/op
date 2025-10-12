@@ -15,8 +15,6 @@
     --ep-hover-shadow: 0 16px 40px rgba(2,6,23,0.45);
     --special-btn-text-color: #1a1a1a;
     --player-shadow: 0 10px 30px rgba(2,6,23,0.5);
-    --notification-bg: #1e1e1e;
-    --new-badge-bg: #ff4757;
   }
   
   [data-theme="light"]{
@@ -35,8 +33,6 @@
     --ep-hover-shadow: 0 12px 30px rgba(0, 30, 80, 0.12);
     --special-btn-text-color: #ffffff;
     --player-shadow: 0 10px 30px rgba(0, 30, 80, 0.15);
-    --notification-bg: #ffffff;
-    --new-badge-bg: #ff6b6b;
   }
 
   *{box-sizing:border-box}
@@ -280,6 +276,7 @@
   
   .list-controls {
     display: flex;
+    gap: 8px;
     padding: 0 6px 12px 6px;
   }
 
@@ -307,7 +304,7 @@
     cursor:pointer; 
     transition: transform .12s, box-shadow .12s, border-color .12s, opacity 0.3s ease-out;
     animation: ep-fade-in 0.4s ease-out;
-    position: relative;
+    position: relative; /* Нужно для позиционирования галочки */
   }
   
   .ep.hiding {
@@ -350,7 +347,7 @@
     opacity: 1;
   }
   .ep.watched::after {
-    content: '✓';
+    content: '✔';
     position: absolute;
     top: 10px;
     right: 12px;
@@ -364,185 +361,6 @@
       opacity: 0.5;
   }
 
-  /* --- Бейджик "Новое" для недавних серий --- */
-  .ep.new-episode {
-    overflow: visible;
-  }
-  .ep.new-episode::before {
-    content: 'НОВОЕ';
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: var(--new-badge-bg);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
-    animation: badge-pulse 2s infinite;
-    z-index: 1;
-  }
-  @keyframes badge-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  /* --- Скелетон-лоадеры --- */
-  .skeleton-card {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    padding: 12px;
-    border-radius: 12px;
-    background: var(--component-bg);
-    border: 1px solid var(--component-border);
-  }
-  .skeleton {
-    background: linear-gradient(90deg, 
-      rgba(255,255,255,0.03) 25%, 
-      rgba(255,255,255,0.07) 50%, 
-      rgba(255,255,255,0.03) 75%
-    );
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 6px;
-  }
-  [data-theme="light"] .skeleton {
-    background: linear-gradient(90deg, 
-      #f0f0f0 25%, 
-      #e0e0e0 50%, 
-      #f0f0f0 75%
-    );
-    background-size: 200% 100%;
-  }
-  .skeleton-thumb {
-    width: 96px;
-    height: 54px;
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
-  .skeleton-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-  }
-  .skeleton-title {
-    width: 70%;
-    height: 16px;
-  }
-  .skeleton-subtitle {
-    width: 50%;
-    height: 12px;
-  }
-  @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* --- Стили уведомления о новой серии --- */
-  .notification {
-    position: fixed;
-    bottom: 20px;
-    right: -400px;
-    width: 360px;
-    z-index: 100;
-    transition: right 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  }
-  .notification.show {
-    right: 20px;
-  }
-  .notification-content {
-    background: var(--notification-bg);
-    border: 1px solid var(--component-border);
-    border-radius: 14px;
-    padding: 14px;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(12px);
-    position: relative;
-  }
-  [data-theme="light"] .notification-content {
-    box-shadow: 0 10px 40px rgba(0, 30, 80, 0.15);
-  }
-  .notification-thumb {
-    width: 80px;
-    height: 45px;
-    border-radius: 8px;
-    background: #0b1720;
-    flex-shrink: 0;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  [data-theme="light"] .notification-thumb {
-    background: #e2e8f0;
-  }
-  .notification-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .notification-text {
-    flex: 1;
-  }
-  .notification-title {
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 4px;
-    color: var(--accent-c);
-  }
-  .notification-episode {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.3;
-  }
-  .notification-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    color: var(--muted);
-    transition: color 0.2s, transform 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .notification-close:hover {
-    color: var(--text);
-    transform: rotate(90deg);
-  }
-  @keyframes slide-in {
-    from {
-      right: -400px;
-      opacity: 0;
-    }
-    to {
-      right: 20px;
-      opacity: 1;
-    }
-  }
-  @keyframes slide-out {
-    from {
-      right: 20px;
-      opacity: 1;
-    }
-    to {
-      right: -400px;
-      opacity: 0;
-    }
-  }
 
   #loadMoreContainer {
     display: flex;
@@ -564,6 +382,26 @@
     transform: rotate(180deg);
   }
   
+  /* --- Стили для кнопки сортировки --- */
+  #sortBtn {
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sort-icon-wrapper {
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    display: inline-block;
+  }
+
+  #sortBtn.asc .sort-icon-wrapper {
+    transform: rotateX(180deg);
+  }
+
   .modal{
     position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50;
     background: rgba(18,18,18,0.85);
@@ -600,7 +438,7 @@
     color: var(--muted);
     line-height: 1.7;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 0 auto; /* Убран нижний отступ */
   }
   .footer-text a {
     color: var(--accent-c);
@@ -613,7 +451,7 @@
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 24px; /* Добавлен отступ, чтобы иконки были выше текста */
   }
   .social-icon {
     display: inline-flex;
@@ -632,7 +470,7 @@
     transform: translateY(-4px);
     box-shadow: var(--component-shadow);
   }
-  .social-icon img {
+  .social-icon img { /* Новое правило для изображений внутри иконок */
     width: 24px;
     height: 24px;
     object-fit: contain;
@@ -645,7 +483,6 @@
     .hero-glow{ top:-60px; height:220px }
     .social-links-bar { top: 150px; padding: 0.5rem; gap: 8px; }
     .wrap { margin-top: 220px; }
-    .notification { width: calc(100% - 40px); }
   }
   @media (max-width: 767px) {
     .wrap { padding: 16px; margin: 220px auto 1rem; }
@@ -672,12 +509,4 @@
       max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .table .action-cell { width: auto; }
-    .notification { 
-      width: calc(100% - 20px); 
-      bottom: 10px;
-      right: -100%;
-    }
-    .notification.show { right: 10px; }
-    .notification-content { padding: 12px; }
-    .notification-thumb { width: 70px; height: 40px; }
   }
