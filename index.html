@@ -48,7 +48,7 @@
     <a href="https://taplink.cc/letovshiyori" target="_blank" rel="noopener noreferrer" class="btn special-btn">Донатик <3</a>
   </nav>
 
-  <div class="wrap" role="main" aria-label="One Piece — озвучка">
+  <div class="wrap" role="main" aria-label="One Piece – озвучка">
     <div class="hero-glow" aria-hidden="true"></div>
 
     <header class="top">
@@ -91,7 +91,7 @@
           <label for="playerSource">Выбор плеера:</label>
           <div class="custom-select">
             <select id="playerSource" name="playerSource">
-              <option value="mega"selected >Основной</option>
+              <option value="mega" selected>Основной</option>
               <option value="dzen">Dzen | 4K</option>
               <option value="kodik">Kodik</option>
             </select>
@@ -131,7 +131,37 @@
         <div class="list-controls">
           <input id="search" class="search" placeholder="Поиск по названию..." aria-label="Поиск по эпизодам">
         </div>
-        <div class="episodes-grid" id="episodesGrid" tabindex="0" aria-live="polite"></div>
+        <div class="episodes-grid" id="episodesGrid" tabindex="0" aria-live="polite">
+          <!-- Скелетон-лоадеры -->
+          <div class="skeleton-card">
+            <div class="skeleton skeleton-thumb"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-subtitle"></div>
+            </div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton skeleton-thumb"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-subtitle"></div>
+            </div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton skeleton-thumb"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-subtitle"></div>
+            </div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton skeleton-thumb"></div>
+            <div class="skeleton-meta">
+              <div class="skeleton skeleton-title"></div>
+              <div class="skeleton skeleton-subtitle"></div>
+            </div>
+          </div>
+        </div>
         <div id="loadMoreContainer" style="display: none;">
           <button id="loadMoreBtn" class="btn ghost" title="Показать/скрыть серии">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -141,6 +171,23 @@
         </div>
       </div>
     </section>
+  </div>
+
+  <!-- Уведомление о новой серии -->
+  <div id="newEpisodeNotification" class="notification" aria-live="polite">
+    <div class="notification-content">
+      <div class="notification-thumb" id="notificationThumb"></div>
+      <div class="notification-text">
+        <div class="notification-title">Вышла новая серия!</div>
+        <div class="notification-episode" id="notificationEpisode"></div>
+      </div>
+      <button class="notification-close" id="notificationClose" aria-label="Закрыть уведомление">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
