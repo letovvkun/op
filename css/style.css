@@ -276,7 +276,6 @@
   
   .list-controls {
     display: flex;
-    gap: 8px;
     padding: 0 6px 12px 6px;
   }
 
@@ -382,26 +381,6 @@
     transform: rotate(180deg);
   }
   
-  /* --- Стили для кнопки сортировки --- */
-  #sortBtn {
-    padding: 0;
-    width: 42px;
-    height: 42px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .sort-icon-wrapper {
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    display: inline-block;
-  }
-
-  #sortBtn.asc .sort-icon-wrapper {
-    transform: rotateX(180deg);
-  }
-
   .modal{
     position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50;
     background: rgba(18,18,18,0.85);
