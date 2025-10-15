@@ -1,4 +1,4 @@
-// --- FIREBASE: Импорт и инициализация ---
+// --- Файл: main.js (ИСПРАВЛЕНО) ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
@@ -113,7 +113,12 @@ function renderList(filter = '') {
               <div class="s">${ep.date} • ${ep.quality}</div>
             </div>`;
           
+          // --- ИСПРАВЛЕННЫЙ: Обработчик клика для загрузки эпизода и переключения статуса ---
           const clickHandler = () => {
+              // 1. Всегда загружаем эпизод при клике
+              loadEpisode(originalIndex);
+
+              // 2. Переключаем статус просмотра
               if (watchedEpisodes.has(ep.firestoreId)) {
                   watchedEpisodes.delete(ep.firestoreId);
                   el.classList.remove('watched');
@@ -121,11 +126,7 @@ function renderList(filter = '') {
                   watchedEpisodes.add(ep.firestoreId);
                   el.classList.add('watched');
               }
-              saveWatchedStatus();
-
-              if (currentIndex !== originalIndex) {
-                  loadEpisode(originalIndex);
-              }
+              saveWatchedStatus(); // Сохраняем изменения
           };
 
           el.onclick = clickHandler;
@@ -233,22 +234,23 @@ search.addEventListener('input', (e) => {
 });
 
 loadMoreBtn.addEventListener('click', () => {
+  const term = search.value.trim().toLowerCase();
+  const filteredEpisodes = episodes.filter(ep =>
+      term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
+  );
   const isExpanded = loadMoreBtn.classList.contains('expanded');
 
   if (isExpanded) {
-      const episodesOnScreen = episodesGrid.querySelectorAll('.ep');
-      for (let i = initialVisibleCount; i < episodesOnScreen.length; i++) {
-          episodesOnScreen[i].classList.add('hiding');
-      }
+      // Сворачиваем список, плавно скрывая лишние элементы
+      const episodesToHide = Array.from(episodesGrid.querySelectorAll('.ep')).slice(initialVisibleCount);
+      episodesToHide.forEach(ep => ep.classList.add('hiding'));
+      
       setTimeout(() => {
           visibleEpisodesCount = initialVisibleCount;
           renderList(search.value);
-      }, 300);
+      }, 300); // 300ms соответствует transition в CSS
   } else {
-      const term = search.value.trim().toLowerCase();
-      const filteredEpisodes = episodes.filter(ep =>
-          term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
-      );
+      // Разворачиваем список
       visibleEpisodesCount = filteredEpisodes.length;
       renderList(search.value);
   }
@@ -277,7 +279,7 @@ shareBtn.addEventListener('click', async () => {
       });
     }
   } catch (err) {
-    console.log("Пользователь отменил отправку.");
+    // Пользователь отменил отправку или ошибка
   }
 });
 
