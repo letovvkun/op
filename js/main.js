@@ -21,6 +21,7 @@
   const initialVisibleCount = 4;
   let visibleEpisodesCount = initialVisibleCount;
   let watchedEpisodes = new Set();
+  let sortOrder = 'desc'; // 'desc' для новых, 'asc' для старых
 
   // --- DOM Элементы ---
   const episodesGrid = document.getElementById('episodesGrid');
@@ -29,6 +30,7 @@
   const playerSub = document.getElementById('playerSub');
   const metaText = document.getElementById('metaText');
   const search = document.getElementById('search');
+  const sortBtn = document.getElementById('sortBtn'); // <-- НОВЫЙ ЭЛЕМЕНТ
   const allBtn = document.getElementById('allBtn');
   const modal = document.getElementById('modal');
   const allTbody = document.getElementById('allTbody');
@@ -235,6 +237,26 @@
   search.addEventListener('input', (e) => {
     visibleEpisodesCount = initialVisibleCount;
     renderList(e.target.value);
+  });
+
+  // --- НОВЫЙ ОБРАБОТЧИК ДЛЯ СОРТИРОВКИ ---
+  sortBtn.addEventListener('click', () => {
+    sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+
+    if (sortOrder === 'asc') {
+      sortBtn.classList.add('asc');
+      sortBtn.title = 'Сортировать: Сначала старые';
+    } else {
+      sortBtn.classList.remove('asc');
+      sortBtn.title = 'Сортировать: Сначала новые';
+    }
+
+    episodes.reverse(); // Просто переворачиваем массив
+
+    // Перерисовываем список и таблицу в модальном окне
+    visibleEpisodesCount = initialVisibleCount;
+    renderList(search.value);
+    renderModalTable(modalSearch.value);
   });
 
   loadMoreBtn.addEventListener('click', () => {
