@@ -15,6 +15,10 @@
     --ep-hover-shadow: 0 16px 40px rgba(2,6,23,0.45);
     --special-btn-text-color: #1a1a1a;
     --player-shadow: 0 10px 30px rgba(2,6,23,0.5);
+
+    /* Переменные для светлого фона таймера */
+    --log-pose-bg-light: rgba(0, 0, 0, 0.05);
+    --log-pose-text-light: #1A202C;
   }
   
   [data-theme="light"]{
@@ -33,6 +37,10 @@
     --ep-hover-shadow: 0 12px 30px rgba(0, 30, 80, 0.12);
     --special-btn-text-color: #ffffff;
     --player-shadow: 0 10px 30px rgba(0, 30, 80, 0.15);
+    
+    /* Переменные для светлого фона таймера */
+    --log-pose-bg-light: rgba(0, 0, 0, 0.75);
+    --log-pose-text-light: #ffffff;
   }
 
   *{box-sizing:border-box}
@@ -90,11 +98,20 @@
     backdrop-filter: blur(14px) saturate(1.05);
   }
 
+  /* ИЗМЕНЕНИЕ: Скорректирован box-shadow для более мягкого и незаметного эффекта сверху */
   [data-theme="light"] .wrap {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.6));
     backdrop-filter: blur(16px) saturate(1.1);
-    box-shadow: 0 12px 40px rgba(0,30,80,0.12);
+    box-shadow: 0 12px 40px rgba(0,30,80,0.06); /* Менее интенсивная тень */
     border: 1px solid rgba(255, 255, 255, 0.2);
+    border-top-color: transparent;
+  }
+  
+  /* --- Анимация пульсации для фона --- */
+  @keyframes pulseGlow {
+    0% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+    100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
   }
 
   .hero-glow{
@@ -102,6 +119,7 @@
     height:320px; pointer-events:none; filter: blur(46px) saturate(1.2);
     background: radial-gradient(closest-side, rgba(255, 255, 255, 0.06), transparent 70%);
     border-radius:40%; z-index:0; opacity:0.95;
+    animation: pulseGlow 8s infinite ease-in-out; /* Применяем анимацию */
   }
   [data-theme="light"] .hero-glow {
       background: radial-gradient(closest-side, rgba(0, 123, 255, 0.1), transparent 80%);
@@ -239,6 +257,43 @@
   .meta-card h3{ margin:0 0 6px 0; font-size:15px }
   .meta-row{ color:var(--muted); font-size:13px; margin-bottom:10px }
 
+  /* --- Стили для Таймера (Log Pose) --- */
+  .log-pose-timer {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 184, 107, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px rgba(255, 184, 107, 0.1) inset;
+    position: relative;
+    overflow: hidden;
+  }
+  .log-pose-timer::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-c), transparent);
+    opacity: 0.5;
+  }
+  .pose-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .pose-time { font-size: 18px; font-weight: 800; color: var(--accent-c); font-family: monospace; letter-spacing: -0.5px; }
+  
+  /* --- СТИЛИ ДЛЯ ТАЙМЕРА НА СВЕТЛОЙ ТЕМЕ --- */
+  [data-theme="light"] .log-pose-timer {
+    background: var(--log-pose-bg-light); /* Темный фон для лучшей читаемости */
+    border-color: rgba(255, 123, 45, 0.5); /* Более темный оранжевый */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2) inset;
+  }
+  [data-theme="light"] .log-pose-timer .pose-label {
+      color: rgba(255, 255, 255, 0.75); /* Светлый текст */
+  }
+  [data-theme="light"] .log-pose-timer .pose-time {
+      color: var(--accent-c); /* Оранжевый акцент */
+  }
+  [data-theme="light"] .log-pose-timer::before {
+      background: linear-gradient(90deg, transparent, var(--accent-c), transparent);
+      opacity: 0.8;
+  }
+
   #player-controls { display:flex;justify-content:space-between;align-items:center;margin-top:12px; }
   .player-title{ font-weight:700; font-size:16px; margin-top:8px; }
   .player-sub{ color:var(--muted); font-size:13px; margin-top:4px; }
@@ -303,9 +358,27 @@
     cursor:pointer; 
     transition: transform .12s, box-shadow .12s, border-color .12s, opacity 0.3s ease-out;
     animation: ep-fade-in 0.4s ease-out;
-    position: relative; /* Нужно для позиционирования галочки */
+    position: relative; 
   }
   
+  /* --- Стили для НОВОЙ СЕРИИ --- */
+  .ep.new-episode {
+    border-color: rgba(255, 184, 107, 0.5);
+    background: linear-gradient(90deg, rgba(255, 184, 107, 0.08), transparent);
+  }
+  .ep.new-episode::before {
+    content: 'NEW';
+    position: absolute;
+    top: -6px; left: -4px;
+    background: var(--accent-c);
+    color: #1a1a1a;
+    font-size: 9px; font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 4px;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(255, 184, 107, 0.4);
+  }
+
   .ep.hiding {
     opacity: 0;
     pointer-events: none;
