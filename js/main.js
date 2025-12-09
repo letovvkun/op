@@ -56,6 +56,37 @@
   function saveWatchedStatus() {
     localStorage.setItem('watchedEpisodes', JSON.stringify([...watchedEpisodes]));
   }
+  
+  // --- Функция Таймера (Log Pose) ---
+  function startCountdown() {
+    const countElem = document.getElementById('countdown');
+    if (!countElem) return;
+
+    function update() {
+      const now = new Date();
+      // Вычисляем следующее воскресенье
+      const nextRelease = new Date();
+      nextRelease.setDate(now.getDate() + (7 - now.getDay()) % 7);
+      nextRelease.setHours(23, 0, 0, 0); // <-- ВРЕМЯ УСТАНОВЛЕНО НА 23:00
+      
+      // Если сегодня воскресенье и время уже прошло, ставим на след. неделю
+      if (now > nextRelease) {
+        nextRelease.setDate(nextRelease.getDate() + 7);
+      }
+
+      const diff = nextRelease - now;
+      
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const m = Math.floor((diff / 1000 / 60) % 60);
+
+      // Красивый формат с ведущими нулями (если нужно)
+      countElem.innerText = `${d}д ${h}ч ${m}м`;
+    }
+
+    setInterval(update, 60000); // Обновляем раз в минуту
+    update();
+  }
 
   // --- Функции ---
   async function loadEpisodes() {
@@ -92,10 +123,16 @@
     if (episodesToRender.length === 0) {
         episodesGrid.innerHTML = '<div style="text-align:center;padding:2rem;width:100%">Ничего не найдено.</div>';
     } else {
-        episodesToRender.forEach(ep => {
+        episodesToRender.forEach((ep, loopIndex) => {
             const originalIndex = episodes.findIndex(e => e.firestoreId === ep.firestoreId);
             const el = document.createElement('div');
             el.className = 'ep';
+            
+            // Если это самый первый элемент в списке (и нет поиска), добавляем класс NEW
+            if (!term && loopIndex === 0) {
+                el.classList.add('new-episode');
+            }
+
             el.tabIndex = 0;
             el.setAttribute('role', 'button');
             el.dataset.firestoreId = ep.firestoreId; 
@@ -113,9 +150,7 @@
                 <div class="s">${ep.date} • ${ep.quality}</div>
               </div>`;
             
-            // --- ИЗМЕНЕНО: Обработчик клика для переключения статуса просмотра ---
             const clickHandler = () => {
-                // Переключаем статус просмотра
                 if (watchedEpisodes.has(ep.firestoreId)) {
                     watchedEpisodes.delete(ep.firestoreId);
                     el.classList.remove('watched');
@@ -123,9 +158,8 @@
                     watchedEpisodes.add(ep.firestoreId);
                     el.classList.add('watched');
                 }
-                saveWatchedStatus(); // Сохраняем изменения
+                saveWatchedStatus(); 
 
-                // Загружаем эпизод, только если он не был активен
                 if (currentIndex !== originalIndex) {
                     loadEpisode(originalIndex);
                 }
@@ -157,8 +191,6 @@
     
     const ep = episodes[idx];
     
-    // --- УДАЛЕНО: Логика добавления в просмотренные перенесена в обработчик клика ---
-
     const selectedPlayer = playerSourceSelect.value;
     const iframeCode = ep.players[selectedPlayer];
     playerEmbed.innerHTML = iframeCode 
@@ -168,6 +200,14 @@
     playerSub.textContent = `${ep.date} • ${ep.quality}`;
     metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
     markActive();
+
+    // Плавный скролл к плееру на мобильных (если экран меньше 980px)
+    if (window.innerWidth < 980) {
+        const playerSection = document.getElementById('playerTitle');
+        if(playerSection) {
+            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
   }
 
   function markActive() {
@@ -178,7 +218,8 @@
     nodes.forEach(node => {
         if (node.dataset.firestoreId === currentEpisodeId) {
             node.classList.add('active');
-            node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // scrollIntoView здесь убран, так как он может мешать при клике. 
+            // Мы используем скролл только при загрузке эпизода (loadEpisode).
         } else {
             node.classList.remove('active');
         }
@@ -325,4 +366,5 @@
     document.body.setAttribute('data-theme', savedTheme);
     loadWatchedStatus();
     loadEpisodes();
+    startCountdown(); // Запуск таймера
   });
