@@ -581,3 +581,54 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
   }
+
+  /* --- Стиль для Награды (Bounty) --- */
+.bounty-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--component-bg);
+  border: 1px solid var(--component-border);
+  padding: 8px 14px;
+  border-radius: 12px;
+  margin-right: 4px;
+  cursor: default;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bounty-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 184, 107, 0.15);
+  border-color: rgba(255, 184, 107, 0.3);
+}
+
+.bounty-badge img {
+  width: 16px; 
+  height: auto;
+  display: block;
+  transform: translateY(-1px); /* Чуть подровнять иконку */
+}
+
+#bountyAmount {
+  font-family: 'Courier New', monospace; /* Моноширинный шрифт как на листовках */
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--accent-c);
+  letter-spacing: -0.5px;
+}
+
+.currency-symbol {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Адаптив для мобилок, чтобы не занимало много места */
+@media (max-width: 480px) {
+  .bounty-badge {
+    padding: 6px 10px;
+  }
+  #bountyAmount {
+    font-size: 13px;
+  }
+}
