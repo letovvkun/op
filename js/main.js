@@ -45,12 +45,28 @@
   const loadMoreContainer = document.getElementById('loadMoreContainer');
   const loadMoreBtn = document.getElementById('loadMoreBtn');
 
+  // --- Функция обновления награды ---
+  function updateBounty() {
+    const bountyElem = document.getElementById('bountyAmount');
+    if (!bountyElem) return;
+
+    // СТОИМОСТЬ ОДНОЙ СЕРИИ (1.5 млн белли)
+    const pricePerEp = 1500000; 
+    
+    // Считаем общую сумму
+    const totalBounty = watchedEpisodes.size * pricePerEp;
+
+    // Форматируем число с разделителями (1,500,000)
+    bountyElem.innerText = totalBounty.toLocaleString('en-US');
+  }
+
   // --- Функции для работы со статусом просмотра ---
   function loadWatchedStatus() {
     const saved = localStorage.getItem('watchedEpisodes');
     if (saved) {
       watchedEpisodes = new Set(JSON.parse(saved));
     }
+    updateBounty(); // Обновляем награду при загрузке
   }
 
   function saveWatchedStatus() {
@@ -179,6 +195,7 @@
                     el.classList.add('watched');
                 }
                 saveWatchedStatus(); 
+                updateBounty(); // Обновляем награду при клике
 
                 if (currentIndex !== originalIndex) {
                     loadEpisode(originalIndex);
