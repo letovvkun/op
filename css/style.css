@@ -98,16 +98,14 @@
     backdrop-filter: blur(14px) saturate(1.05);
   }
 
-  /* ИЗМЕНЕНИЕ: Скорректирован box-shadow для более мягкого и незаметного эффекта сверху */
   [data-theme="light"] .wrap {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.6));
     backdrop-filter: blur(16px) saturate(1.1);
-    box-shadow: 0 12px 40px rgba(0,30,80,0.06); /* Менее интенсивная тень */
+    box-shadow: 0 12px 40px rgba(0,30,80,0.06); 
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-top-color: transparent;
   }
   
-  /* --- Анимация пульсации для фона --- */
   @keyframes pulseGlow {
     0% { opacity: 0.7; transform: translateX(-50%) scale(1); }
     50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
@@ -119,7 +117,7 @@
     height:320px; pointer-events:none; filter: blur(46px) saturate(1.2);
     background: radial-gradient(closest-side, rgba(255, 255, 255, 0.06), transparent 70%);
     border-radius:40%; z-index:0; opacity:0.95;
-    animation: pulseGlow 8s infinite ease-in-out; /* Применяем анимацию */
+    animation: pulseGlow 8s infinite ease-in-out; 
   }
   [data-theme="light"] .hero-glow {
       background: radial-gradient(closest-side, rgba(0, 123, 255, 0.1), transparent 80%);
@@ -277,17 +275,16 @@
   .pose-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .pose-time { font-size: 18px; font-weight: 800; color: var(--accent-c); font-family: monospace; letter-spacing: -0.5px; }
   
-  /* --- СТИЛИ ДЛЯ ТАЙМЕРА НА СВЕТЛОЙ ТЕМЕ --- */
   [data-theme="light"] .log-pose-timer {
-    background: var(--log-pose-bg-light); /* Темный фон для лучшей читаемости */
-    border-color: rgba(255, 123, 45, 0.5); /* Более темный оранжевый */
+    background: var(--log-pose-bg-light); 
+    border-color: rgba(255, 123, 45, 0.5); 
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2) inset;
   }
   [data-theme="light"] .log-pose-timer .pose-label {
-      color: rgba(255, 255, 255, 0.75); /* Светлый текст */
+      color: rgba(255, 255, 255, 0.75); 
   }
   [data-theme="light"] .log-pose-timer .pose-time {
-      color: var(--accent-c); /* Оранжевый акцент */
+      color: var(--accent-c); 
   }
   [data-theme="light"] .log-pose-timer::before {
       background: linear-gradient(90deg, transparent, var(--accent-c), transparent);
@@ -361,7 +358,6 @@
     position: relative; 
   }
   
-  /* --- Стили для НОВОЙ СЕРИИ --- */
   .ep.new-episode {
     border-color: rgba(255, 184, 107, 0.5);
     background: linear-gradient(90deg, rgba(255, 184, 107, 0.08), transparent);
@@ -411,7 +407,6 @@
       box-shadow: 0 12px 40px rgba(255,177,107,0.06) inset !important;
   }
   
-  /* --- Стили для просмотренных серий --- */
   .ep.watched {
     opacity: 0.65;
   }
@@ -473,7 +468,6 @@
   .table td{ padding:8px 10px; border-top: 1px dashed var(--component-border) }
   .table .action-cell { width: 140px; text-align: right; }
 
-  /* --- Стили для подвала --- */
   .site-footer {
     text-align: center;
     padding: 40px 20px;
@@ -490,7 +484,7 @@
     color: var(--muted);
     line-height: 1.7;
     max-width: 600px;
-    margin: 0 auto; /* Убран нижний отступ */
+    margin: 0 auto; 
   }
   .footer-text a {
     color: var(--accent-c);
@@ -503,7 +497,7 @@
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin-bottom: 24px; /* Добавлен отступ, чтобы иконки были выше текста */
+    margin-bottom: 24px; 
   }
   .social-icon {
     display: inline-flex;
@@ -522,7 +516,7 @@
     transform: translateY(-4px);
     box-shadow: var(--component-shadow);
   }
-  .social-icon img { /* Новое правило для изображений внутри иконок */
+  .social-icon img { 
     width: 24px;
     height: 24px;
     object-fit: contain;
@@ -561,4 +555,29 @@
       max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .table .action-cell { width: auto; }
+  }
+
+  /* --- SKELETON LOADING --- */
+  .skeleton-loader {
+      background: linear-gradient(90deg,
+          rgba(255, 255, 255, 0.03) 25%,
+          rgba(255, 255, 255, 0.08) 50%,
+          rgba(255, 255, 255, 0.03) 75%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+  }
+
+  [data-theme="light"] .skeleton-loader {
+       background: linear-gradient(90deg,
+          rgba(0, 0, 0, 0.05) 25%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.05) 75%
+      );
+  }
+
+  @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
   }
