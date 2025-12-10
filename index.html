@@ -42,24 +42,9 @@
     transition: filter 0.3s ease;
 }
 
-/* Стили для ТЕМНОЙ ТЕМЫ */
+/* Стили для ТЕМНОЙ ТЕМЫ: инвертирует цвет всех иконок */
 body[data-theme="dark"] .site-footer .js-themable-icon {
-    /* Инвертирует цвет для черных SVG (Telegram) */
-    filter: invert(1) hue-rotate(180deg);
-}
-
-/* Переопределение для цветных иконок (Boosty, YouTube, TikTok),
-   чтобы не портить их цвета, а просто сделать их более заметными 
-   с помощью белой тени. */
-body[data-theme="dark"] .site-footer a[title="Boosty"] .js-themable-icon,
-body[data-theme="dark"] .site-footer a[title="YouTube"] .js-themable-icon,
-body[data-theme="dark"] .site-footer a[title="TikTok"] .js-themable-icon {
-    /* Добавляем белую тень вместо инвертирования */
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
-}
-
-/* Специально для Telegram, если он черно-белый, инвертирование идеально подойдет */
-body[data-theme="dark"] .site-footer a[title="Telegram"] .js-themable-icon {
+    /* Инвертирует цвет: черный становится белым, синий в оранжевый и т.д. */
     filter: invert(1);
 }
 </style>
@@ -220,7 +205,7 @@ body[data-theme="dark"] .site-footer a[title="Telegram"] .js-themable-icon {
     <div class="footer-content">
       <div class="footer-socials">
         <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
-          <img src="https://www.svgrepo.com/show/506600/telegram.svg" alt="Telegram" class="js-themable-icon">
+          <img src="https://www.svgrepo.com/show/394493/telegram.svg" alt="Telegram" class="js-themable-icon">
         </a>
         <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
           <img src="https://assets.streamlinehq.com/image/private/w_300,h_300,ar_1/f_auto/v1/icons/logos/boosty-p8nrg4ij2ee07h54b69u.png/boosty-664rw67wn5y8ls2vgiirn.png?_a=DATAg1AAZAA0" alt="Boosty" class="js-themable-icon">
