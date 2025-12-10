@@ -88,9 +88,29 @@
     update();
   }
 
+  // --- Функции рендеринга скелетона ---
+  function renderSkeletons() {
+    episodesGrid.innerHTML = '';
+    // Генерируем столько скелетов, сколько серий показываем по умолчанию
+    for (let i = 0; i < initialVisibleCount; i++) {
+        const el = document.createElement('div');
+        el.className = 'ep';
+        el.style.pointerEvents = 'none'; // Чтобы нельзя было нажать во время загрузки
+        el.innerHTML = `
+          <div class="thumb skeleton-loader" style="border:none;"></div>
+          <div class="meta" style="width:100%">
+            <div class="skeleton-loader" style="height:14px; width:70%; margin-bottom:6px;"></div>
+            <div class="skeleton-loader" style="height:12px; width:40%;"></div>
+          </div>`;
+        episodesGrid.appendChild(el);
+    }
+  }
+
   // --- Функции ---
   async function loadEpisodes() {
-    episodesGrid.innerHTML = '<div style="text-align:center;padding:2rem;width:100%">Загрузка серий...</div>';
+    // Включаем скелетон перед загрузкой
+    renderSkeletons();
+    
     try {
       const q = query(episodesCollection, orderBy("id", "desc"));
       const querySnapshot = await getDocs(q);
