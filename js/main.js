@@ -21,6 +21,7 @@
   const initialVisibleCount = 4;
   let visibleEpisodesCount = initialVisibleCount;
   let watchedEpisodes = new Set();
+  const PLAYER_SOURCE_KEY = 'lastPlayerSource'; // <-- ДОБАВЛЕНО: Ключ для сохранения плеера
 
   // --- DOM Элементы ---
   const episodesGrid = document.getElementById('episodesGrid');
@@ -231,7 +232,14 @@
     
     const ep = episodes[idx];
     
-    const selectedPlayer = playerSourceSelect.value;
+    // --- ИЗМЕНЕНИЕ: Загружаем сохраненный плеер ---
+    // 1. Загружаем сохраненный плеер или используем 'dzen' по умолчанию (как в HTML)
+    const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'dzen'; 
+    playerSourceSelect.value = savedSource; // Устанавливаем значение в SELECT
+    
+    const selectedPlayer = playerSourceSelect.value; // Читаем установленное (или сохраненное) значение
+    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+    
     const iframeCode = ep.players[selectedPlayer];
     playerEmbed.innerHTML = iframeCode 
       ? iframeCode 
@@ -310,6 +318,11 @@
     if (currentIndex > 0) loadEpisode(currentIndex - 1);
   });
   playerSourceSelect.addEventListener('change', () => {
+    // --- ИЗМЕНЕНИЕ: Сохраняем новый выбор плеера ---
+    const newPlayer = playerSourceSelect.value;
+    localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer); 
+    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+    
     if (currentIndex !== -1) {
       // При смене плеера мы уже на месте, скролл не нужен
       loadEpisode(currentIndex);
