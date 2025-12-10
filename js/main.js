@@ -138,7 +138,8 @@
       const indexToLoad = (savedIndex !== null && episodes[savedIndex]) ? parseInt(savedIndex, 10) : 0;
       
       if (episodes.length > 0) {
-        loadEpisode(indexToLoad); 
+        // При первой загрузке страницы скроллить не нужно (false)
+        loadEpisode(indexToLoad, false); 
       } else {
         playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
         playerTitle.textContent = 'Нет доступных серий';
@@ -198,7 +199,8 @@
                 updateBounty(); // Обновляем награду при клике
 
                 if (currentIndex !== originalIndex) {
-                    loadEpisode(originalIndex);
+                    // ТУТ ВАЖНО: Передаем true, чтобы скроллить при клике из списка
+                    loadEpisode(originalIndex, true);
                 }
             };
 
@@ -221,7 +223,8 @@
     markActive();
   }
 
-  function loadEpisode(idx) {
+  // Добавлен аргумент shouldScroll (по умолчанию false)
+  function loadEpisode(idx, shouldScroll = false) {
     if (idx < 0 || idx >= episodes.length) return;
     currentIndex = idx;
     localStorage.setItem('lastEpisodeIndex', currentIndex);
@@ -238,8 +241,8 @@
     metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
     markActive();
 
-    // Плавный скролл к плееру на мобильных (если экран меньше 980px)
-    if (window.innerWidth < 980) {
+    // Логика скролла теперь срабатывает только если shouldScroll === true
+    if (shouldScroll && window.innerWidth < 980) {
         const playerSection = document.getElementById('playerTitle');
         if(playerSection) {
             playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -255,8 +258,6 @@
     nodes.forEach(node => {
         if (node.dataset.firestoreId === currentEpisodeId) {
             node.classList.add('active');
-            // scrollIntoView здесь убран, так как он может мешать при клике. 
-            // Мы используем скролл только при загрузке эпизода (loadEpisode).
         } else {
             node.classList.remove('active');
         }
@@ -291,7 +292,8 @@
     allTbody.querySelectorAll('button').forEach(b => {
       b.onclick = () => {
         const idx = Number(b.getAttribute('data-idx'));
-        loadEpisode(idx);
+        // При выборе из модального окна тоже скроллим (true)
+        loadEpisode(idx, true);
         closeModal();
       };
     });
@@ -300,13 +302,16 @@
   // --- Обработчики событий ---
 
   prevBtn.addEventListener('click', () => {
+    // При переключении кнопками скроллить НЕ нужно (не передаем true)
     if (currentIndex < episodes.length - 1) loadEpisode(currentIndex + 1);
   });
   nextBtn.addEventListener('click', () => {
+    // При переключении кнопками скроллить НЕ нужно
     if (currentIndex > 0) loadEpisode(currentIndex - 1);
   });
   playerSourceSelect.addEventListener('change', () => {
     if (currentIndex !== -1) {
+      // При смене плеера мы уже на месте, скролл не нужен
       loadEpisode(currentIndex);
     }
   });
