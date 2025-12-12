@@ -227,5 +227,143 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
   </footer>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module" src="js/main.js"></script>
+    <div id="tg-floating-button" class="tg-button-style">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.665 3.717L2.972 10.869C1.986 11.237 1.992 11.835 2.768 12.088L7.152 13.518L17.438 6.76C17.947 6.438 18.411 6.613 18.015 6.985L9.123 15.356L9.088 15.39L8.746 19.16C9.256 19.16 9.471 18.919 9.754 18.632L12.28 16.096L17.29 20.02C18.267 20.592 18.943 20.288 19.176 19.063L22.378 3.398C22.723 1.895 21.728 1.158 20.665 3.717Z" fill="white"/>
+    </svg>
+    <span>Мини чат</span>
+</div>
+
+<div id="tg-widget-popup" class="tg-popup-hidden">
+    <div class="tg-popup-header">
+        <span>Комментарии</span>
+        <button id="tg-close-btn">&times;</button>
+    </div>
+    <div class="tg-widget-content">
+        <script async src="https://comments.app/js/widget.js?3" data-comments-app-website="jNmXdt-K" data-limit="5" data-color="FFFFFF" data-dislikes="1" data-colorful="1" data-dark="1"></script>
+    </div>
+</div>
+
+<style>
+    /* Стиль кнопки */
+    .tg-button-style {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #2AABEE; /* Цвет Telegram */
+        color: white;
+        padding: 12px 20px;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: sans-serif;
+        font-weight: bold;
+        z-index: 9999;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .tg-button-style:hover {
+        background-color: #229ED9;
+        transform: scale(1.05);
+    }
+
+    /* Стиль всплывающего окна */
+    #tg-widget-popup {
+        position: fixed;
+        bottom: 80px; /* Чуть выше кнопки */
+        right: 20px;
+        width: 350px; /* Ширина окна чата */
+        max-width: 90%;
+        background-color: #1c1c1c; /* Темный фон под темную тему виджета */
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        z-index: 9998;
+        overflow: hidden;
+        border: 1px solid #333;
+        transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    }
+
+    /* Классы для скрытия/показа */
+    .tg-popup-hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+        pointer-events: none;
+    }
+
+    .tg-popup-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    /* Заголовок окна с кнопкой закрытия */
+    .tg-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        background-color: #232323;
+        color: #fff;
+        font-family: sans-serif;
+        font-size: 14px;
+        border-bottom: 1px solid #333;
+    }
+
+    #tg-close-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .tg-widget-content {
+        padding: 10px;
+        /* Ограничение высоты, если комментариев много */
+        max-height: 400px; 
+        overflow-y: auto;
+    }
+    
+    /* Дополнительные стили, чтобы виджет comments.app корректно отображался в контейнере */
+    .tg-widget-content iframe {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 380px; /* Минимальная высота, чтобы чат было видно */
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tgBtn = document.getElementById('tg-floating-button');
+        const tgPopup = document.getElementById('tg-widget-popup');
+        const closeBtn = document.getElementById('tg-close-btn');
+
+        // Функция открытия/закрытия
+        function toggleTgChat() {
+            if (tgPopup.classList.contains('tg-popup-hidden')) {
+                tgPopup.classList.remove('tg-popup-hidden');
+                tgPopup.classList.add('tg-popup-visible');
+            } else {
+                tgPopup.classList.remove('tg-popup-visible');
+                tgPopup.classList.add('tg-popup-hidden');
+            }
+        }
+
+        // Клик по кнопке "Мини чат"
+        tgBtn.addEventListener('click', toggleTgChat);
+
+        // Клик по крестику
+        closeBtn.addEventListener('click', function() {
+            tgPopup.classList.remove('tg-popup-visible');
+            tgPopup.classList.add('tg-popup-hidden');
+        });
+    });
+</script>
 </body>
 </html>
