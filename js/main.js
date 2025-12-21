@@ -415,6 +415,63 @@
     }
   });
 
+  // --- Функция Снега ---
+  function initSnowEffect() {
+    const now = new Date();
+    const month = now.getMonth(); // 0 - Январь, 11 - Декабрь
+    const day = now.getDate();
+
+    // Логика: 10 Декабря (месяц 11, день >= 10) ИЛИ до 20 Января (месяц 0, день <= 20)
+    const isWinterSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
+
+    if (!isWinterSeason) return;
+
+    // Создаем контейнер
+    const snowContainer = document.createElement('div');
+    snowContainer.id = 'snow-container';
+    document.body.appendChild(snowContainer);
+
+    // Создаем снежинки
+    const snowflakesCount = 50; 
+    for (let i = 0; i < snowflakesCount; i++) {
+        const flake = document.createElement('div');
+        flake.classList.add('snowflake');
+        
+        // Рандомизация
+        const size = Math.random() * 3 + 2 + 'px'; // 2-5px
+        const left = Math.random() * 100 + '%';
+        const duration = Math.random() * 5 + 5 + 's'; // 5-10s
+        const delay = Math.random() * 5 + 's';
+        const opacity = Math.random() * 0.5 + 0.3;
+
+        flake.style.width = size;
+        flake.style.height = size;
+        flake.style.left = left;
+        flake.style.animationDuration = duration;
+        flake.style.animationDelay = delay;
+        flake.style.opacity = opacity;
+
+        snowContainer.appendChild(flake);
+    }
+
+    // Функция проверки темы (скрывать на светлой)
+    function checkThemeForSnow() {
+        const theme = document.body.getAttribute('data-theme');
+        if (theme === 'light') {
+            snowContainer.style.display = 'none';
+        } else {
+            snowContainer.style.display = 'block';
+        }
+    }
+
+    // Запускаем проверку сразу
+    checkThemeForSnow();
+
+    // Следим за изменениями атрибута темы
+    const observer = new MutationObserver(checkThemeForSnow);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
   // --- Инициализация при загрузке ---
   document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -422,4 +479,5 @@
     loadWatchedStatus();
     loadEpisodes();
     startCountdown(); // Запуск таймера
+    initSnowEffect(); // Запуск снега
   });
