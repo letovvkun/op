@@ -44,29 +44,47 @@
   }
 
   *{box-sizing:border-box}
-  html{
-    scroll-behavior:smooth;
-    background-color: var(--bg-2);
+  
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg-2); /* Страховка для оверскролла на мобильных */
+    height: 100%;
   }
-  body{
-    min-height:100vh; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    color:var(--text);
-    background: radial-gradient(1000px at 15% 15%, rgba(255, 255, 255, 0.05), transparent 40%),
-                radial-gradient(800px at 85% 85%, rgba(255, 255, 255, 0.03), transparent 50%),
-                linear-gradient(180deg,var(--bg-1), var(--bg-2));
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; padding:0;
+
+  body {
+    min-height: 100%;
+    margin: 0; 
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: var(--text);
+    
+    /* ИСПРАВЛЕННЫЙ ГРАДИЕНТ */
+    background: 
+        radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.05) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.03) 0%, transparent 45%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    
+    /* ФИКСАЦИЯ ФОНА (Убирает рамки при скролле) */
+    background-attachment: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+    
+    -webkit-font-smoothing: antialiased; 
+    -moz-osx-font-smoothing: grayscale; 
+    padding: 0;
   }
   
   [data-theme="light"] body {
       background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      background-attachment: fixed; /* Фиксация для светлой темы тоже */
   }
 
   .site-banner {
     width: 100%; height: 400px; position: absolute; top: 0; left: 0; z-index: 0;
     background: url('https://i.imghippo.com/files/DS3641jXk.jpg') no-repeat center center;
     background-size: cover;
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    /* Улучшенная маска для плавного перехода в фон */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
   }
   
   .social-links-bar {
