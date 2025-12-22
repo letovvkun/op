@@ -415,61 +415,43 @@
     }
   });
 
-  // --- Функция Снега ---
+  // --- Функция Инициализации Снега ---
   function initSnowEffect() {
     const now = new Date();
-    const month = now.getMonth(); // 0 - Январь, 11 - Декабрь
+    const month = now.getMonth(); // 0 = Январь, 11 = Декабрь
     const day = now.getDate();
 
-    // Логика: 10 Декабря (месяц 11, день >= 10) ИЛИ до 20 Января (месяц 0, день <= 20)
-    const isWinterSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
+    // Проверка даты: (Декабрь и день >= 10) ИЛИ (Январь и день <= 20)
+    const isSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
 
-    if (!isWinterSeason) return;
+    if (!isSeason) return; // Если не сезон, выходим
 
     // Создаем контейнер
-    const snowContainer = document.createElement('div');
-    snowContainer.id = 'snow-container';
-    document.body.appendChild(snowContainer);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'snow-wrapper';
+    document.body.appendChild(wrapper);
 
     // Создаем снежинки
-    const snowflakesCount = 50; 
-    for (let i = 0; i < snowflakesCount; i++) {
-        const flake = document.createElement('div');
-        flake.classList.add('snowflake');
-        
-        // Рандомизация
-        const size = Math.random() * 3 + 2 + 'px'; // 2-5px
-        const left = Math.random() * 100 + '%';
-        const duration = Math.random() * 5 + 5 + 's'; // 5-10s
-        const delay = Math.random() * 5 + 's';
-        const opacity = Math.random() * 0.5 + 0.3;
+    const flakesCount = 50; // Легкий снег
+    for (let i = 0; i < flakesCount; i++) {
+      const flake = document.createElement('div');
+      flake.className = 'snowflake';
+      
+      const size = Math.random() * 3 + 2; 
+      const left = Math.random() * 100; 
+      const duration = Math.random() * 10 + 10; 
+      const delay = Math.random() * -20; 
+      const opacity = Math.random() * 0.4 + 0.4; 
 
-        flake.style.width = size;
-        flake.style.height = size;
-        flake.style.left = left;
-        flake.style.animationDuration = duration;
-        flake.style.animationDelay = delay;
-        flake.style.opacity = opacity;
+      flake.style.width = `${size}px`;
+      flake.style.height = `${size}px`;
+      flake.style.left = `${left}%`;
+      flake.style.animationDuration = `${duration}s`;
+      flake.style.animationDelay = `${delay}s`;
+      flake.style.opacity = opacity;
 
-        snowContainer.appendChild(flake);
+      wrapper.appendChild(flake);
     }
-
-    // Функция проверки темы (скрывать на светлой)
-    function checkThemeForSnow() {
-        const theme = document.body.getAttribute('data-theme');
-        if (theme === 'light') {
-            snowContainer.style.display = 'none';
-        } else {
-            snowContainer.style.display = 'block';
-        }
-    }
-
-    // Запускаем проверку сразу
-    checkThemeForSnow();
-
-    // Следим за изменениями атрибута темы
-    const observer = new MutationObserver(checkThemeForSnow);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
   }
 
   // --- Инициализация при загрузке ---
