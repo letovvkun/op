@@ -45,46 +45,37 @@
 
   *{box-sizing:border-box}
   
-  html {
-    scroll-behavior: smooth;
-    background-color: var(--bg-2); /* Страховка для оверскролла на мобильных */
-    height: 100%;
+  html{
+    scroll-behavior:smooth;
+    background-color: var(--bg-2);
   }
-
-  body {
-    min-height: 100%;
-    margin: 0; 
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    color: var(--text);
-    
-    /* ИСПРАВЛЕННЫЙ ГРАДИЕНТ */
-    background: 
-        radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.05) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.03) 0%, transparent 45%),
-        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-    
-    /* ФИКСАЦИЯ ФОНА (Убирает рамки при скролле) */
+  
+  body{
+    min-height:100vh;
+    /* Убрали 100dvh здесь, чтобы не конфликтовало с html фоном */
+    margin:0; 
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    background: radial-gradient(1000px at 15% 15%, rgba(255, 255, 255, 0.05), transparent 40%),
+                radial-gradient(800px at 85% 85%, rgba(255, 255, 255, 0.03), transparent 50%),
+                linear-gradient(180deg,var(--bg-1), var(--bg-2));
+    /* Fixed помогает фону стоять на месте и перекрывать "дырки" при скролле */
     background-attachment: fixed;
-    background-size: cover;
-    background-repeat: no-repeat;
-    
-    -webkit-font-smoothing: antialiased; 
-    -moz-osx-font-smoothing: grayscale; 
-    padding: 0;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; padding:0;
+    overflow-x: hidden; /* Защита от горизонтальной прокрутки */
   }
   
   [data-theme="light"] body {
       background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
-      background-attachment: fixed; /* Фиксация для светлой темы тоже */
+      background-attachment: fixed;
   }
 
   .site-banner {
     width: 100%; height: 400px; position: absolute; top: 0; left: 0; z-index: 0;
     background: url('https://i.imghippo.com/files/DS3641jXk.jpg') no-repeat center center;
     background-size: cover;
-    /* Улучшенная маска для плавного перехода в фон */
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
   }
   
   .social-links-bar {
@@ -651,35 +642,38 @@
   }
 }
 
-/* --- Эффект Снега --- */
-#snow-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Чтобы снег не перекрывал клики */
-    z-index: 9999; /* Поверх всего */
-    overflow: hidden;
-    display: none; /* Скрыт по умолчанию */
+/* --- СНЕЖНЫЙ ЭФФЕКТ (ИСПРАВЛЕНО: УБРАН ПОЛ) --- */
+.snow-wrapper {
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  width: 100%;
+  /* Увеличиваем высоту больше экрана, чтобы снег падал "в подвал" */
+  height: 120vh; 
+  pointer-events: none; 
+  z-index: 9999;
+  overflow: hidden;
+  transform: translate3d(0, 0, 0); 
 }
 
 .snowflake {
-    position: absolute;
-    top: -10px;
-    background-color: white;
-    border-radius: 50%;
-    opacity: 0.8;
-    animation-name: fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+  position: absolute;
+  top: -10px;
+  background-color: white;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation-name: snowfall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
 
-@keyframes fall {
-    0% {
-        transform: translateY(-10vh) translateX(0);
-    }
-    100% {
-        transform: translateY(110vh) translateX(20px); /* Небольшой снос вбок */
-    }
+@keyframes snowfall {
+  0% { transform: translateY(0); }
+  /* Снег падает еще ниже, за пределы видимости */
+  100% { transform: translateY(130vh); }
+}
+
+/* Отключаем снег на светлой теме */
+[data-theme="light"] .snow-wrapper {
+  display: none;
 }
