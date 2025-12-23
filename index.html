@@ -44,7 +44,6 @@
 
 /* Стили для ТЕМНОЙ ТЕМЫ: инвертирует цвет всех иконок */
 body[data-theme="dark"] .site-footer .js-themable-icon {
-    /* Инвертирует цвет: черный становится белым, синий в оранжевый и т.д. */
     filter: invert(1);
 }
 </style>
@@ -127,9 +126,13 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
         
         <h3>О серии</h3>
         <div class="meta-row" id="metaText">Выбери эпизод из списка.</div>
-        <div class="nav-row">
-          <div class="pill" id="shareBtn" title="Поделиться ссылкой на сайт">Поделиться</div>
+        
+        <div class="nav-row" style="flex-direction: column; gap: 10px;">
+          <div class="pill" id="shareBtn" title="Поделиться ссылкой на сайт" style="justify-content: center; width: 100%;">
+            Поделиться ссылкой
+          </div>
         </div>
+        
         <div style="height:10px"></div>
         <div>
           <div style="font-weight:700;font-size:13px;margin-bottom:6px">Подписаться</div>
@@ -145,8 +148,9 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
         https://t.me/boost/maxletovv_dub
         <br>
         https://www.tiktok.com/@max.letovv_dub</div>
+        
         <div style="margin-top: 12px;">
-            <button id="copyrightBtn" class="btn ghost">Для правообладателей</button>
+            <a href="info.html" class="btn ghost" style="width: 100%; justify-content: center;">FAQ / Инфо</a>
         </div>
       </aside>
     </section>
@@ -205,8 +209,8 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
             <p>Данный сайт является исключительно информационным и демонстрационным проектом.</p>
             <p>Все права на аудио и видеоматериалы, представленные на сайте, принадлежат их законным правообладателям. Мы не претендуем на авторство и не извлекаем коммерческую выгоду из их использования.</p>
             <p>Весь контент (видеофайлы) размещен на сторонних ресурсах и встроен в плеер с помощью технологии iframe. Наш сайт не хранит никаких нелегальных материалов, а лишь предоставляет ссылки на них.</p>
-            <p>Если вы являетесь правообладателем и считаете, что ваши права были нарушены, пожалуйста, свяжитесь с нами по электронной почте. Мы готовы оперативно рассмотреть ваш запрос и удалить спорные материалы.</p>
-            <p><strong>Почта для связи:</strong> В случаях нарушения авторских прав или сотрудничества — обращайтесь на почту: <a href="mailto:support@letovshiyori.org" style="color: var(--accent-c);">support@letovshiyori.org</a></p>
+            <p>Если вы являетесь правообладателем и считаете, что ваши права были нарушены, пожалуйста, свяжитесь с нами по электронной почте.</p>
+            <p><strong>Почта для связи:</strong> <a href="mailto:support@letovshiyori.org" style="color: var(--accent-c);">support@letovshiyori.org</a></p>
         </div>
     </div>
   </div>
