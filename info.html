@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Информация | Макс Летов & ShiYori</title>
+<link rel="icon" href="data:," />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .info-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
+  .info-card { background: var(--component-bg); border: 1px solid var(--component-border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; backdrop-filter: blur(10px); }
+  h2 { margin-top: 0; color: var(--text); font-size: 20px; border-bottom: 1px solid var(--component-border); padding-bottom: 12px; margin-bottom: 16px; }
+  
+  details { background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; transition: all 0.2s; }
+  details[open] { background: rgba(255,255,255,0.05); }
+  summary { padding: 14px; cursor: pointer; font-weight: 600; list-style: none; position: relative; padding-right: 40px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; position: absolute; right: 14px; color: var(--muted); }
+  details[open] summary::after { content: '−'; color: var(--accent-c); }
+  .faq-content { padding: 0 14px 14px 14px; color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+  .status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--component-border); }
+  .status-row:last-child { border-bottom: none; }
+  .status-label { font-size: 14px; font-weight: 500; }
+  .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  
+  .st-done { background: rgba(0, 179, 126, 0.2); color: #00b37e; border: 1px solid rgba(0, 179, 126, 0.3); }
+  .st-process { background: rgba(255, 184, 107, 0.2); color: #ffb86b; border: 1px solid rgba(255, 184, 107, 0.3); }
+  .st-wait { background: rgba(255, 255, 255, 0.1); color: var(--muted); }
+
+  .team-member { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .avatar { width: 50px; height: 50px; border-radius: 50%; background: #333; object-fit: cover; border: 2px solid var(--accent-c); }
+  .team-info div { font-weight: 700; font-size: 15px; }
+  .team-info span { font-size: 12px; color: var(--muted); }
+  
+  @media (max-width: 900px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .info-grid > div:nth-child(2) { order: -1; }
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+  <div class="wrap" style="margin-top: 40px;">
+    <header class="top">
+      <div class="brand">
+        <div class="logo-badge" onclick="window.location.href='/'" style="cursor:pointer"><img src="https://i.ibb.co/F2Lr9rP/image.webp" alt="L"></div>
+        <div class="title"><h1>Информация</h1><p>Ответы на вопросы</p></div>
+      </div>
+      <div class="controls-top">
+         <a href="/" class="btn ghost">← На главную</a>
+         <button id="themeBtn" class="btn ghost"><span class="icon-moon"></span><span class="icon-sun"></span></button>
+      </div>
+    </header>
+
+    <div class="info-grid">
+      <div>
+        <div class="info-card">
+          <h2>Часто задаваемые вопросы (FAQ)</h2>
+          <details open><summary>Когда выходит новая серия?</summary><div class="faq-content">Новые серии выходят каждое <strong>воскресенье ~23:00 по МСК</strong>.</div></details>
+          <details><summary>Плеер тормозит / Не грузит</summary><div class="faq-content">1. Смените плеер (Dzen, Kodik, Mega).<br>2. Отключите VPN (для РФ) или включите (для других стран).</div></details>
+          <details><summary>Как скачать серию?</summary><div class="faq-content">Скачать файлом можно в нашем <a href="https://t.me/maxletovv_dub" target="_blank" style="color:var(--accent-c)">Telegram канале</a>.</div></details>
+        </div>
+
+        <div class="info-card">
+          <h2>DMCA / Правовая информация</h2>
+          <div style="font-size: 13px; color: var(--muted); line-height: 1.6;">
+            <p>Данный сайт является исключительно информационным и демонстрационным проектом. Все права на аудио и видеоматериалы, представленные на сайте, принадлежат их законным правообладателям. Мы не претендуем на авторство и не извлекаем коммерческую выгоду из их использования. Весь контент (видеофайлы) размещен на сторонних ресурсах и встроен в плеер с помощью технологии iframe. Наш сайт не хранит никаких нелегальных материалов, а лишь предоставляет ссылки на них.
+
+Если вы являетесь правообладателем и считаете, что ваши права были нарушены, пожалуйста, свяжитесь с нами по электронной почте. Мы готовы оперативно рассмотреть ваш запрос и удалить спорные материалы.</p>
+            <p>По вопросам: <a href="mailto:support@letovshiyori.org" style="color:var(--accent-c)">support@letovshiyori.org</a></p>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="info-card" style="border-color: var(--accent-c);">
+            <h2>🔥 Статус след. серии</h2>
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+                Ожидаем: <strong>Серия <span id="view-ep-num">...</span></strong>
+            </div>
+            
+            <div class="status-row"><span class="status-label">Перевод</span><span id="view-translation" class="status-badge st-wait">...</span></div>
+            <div class="status-row"><span class="status-label">Озвучка (Макс)</span><span id="view-dub-max" class="status-badge st-wait">...</span></div>
+            <div class="status-row"><span class="status-label">Озвучка (ShiYori)</span><span id="view-dub-shiyori" class="status-badge st-wait">...</span></div>
+            <div class="status-row"><span class="status-label">Сведение</span><span id="view-mixing" class="status-badge st-wait">...</span></div>
+            <div class="status-row"><span class="status-label">Заливка</span><span id="view-upload" class="status-badge st-wait">...</span></div>
+            
+            <div style="margin-top:12px; font-size:10px; color:var(--muted); text-align:right">Обновлено: <span id="view-updated">...</span></div>
+        </div>
+
+        <div class="info-card">
+          <h2>Команда</h2>
+          <div class="team-member"><img src="https://i.ibb.co/1Gj2w6y/max-avatar.jpg" class="avatar"><div class="team-info"><div>Макс Летов</div><span>Мужской голос (Луффи, Зоро, Санджи и др.)</span></div></div>
+          <div class="team-member"><img src="https://i.ibb.co/vz2k1q8/shiyori-avatar.jpg" class="avatar"><div class="team-info"><div>ShiYori</div><span>Женский голос (Нами, Чоппер, Нико Робин и др.)</span></div></div>
+          <a href="https://boosty.to/maxletovv" target="_blank" class="btn special-btn" style="width: 100%; margin-top:10px">Поддержать на Boosty</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw",
+    authDomain: "letovshiyori.firebaseapp.com",
+    projectId: "letovshiyori",
+    storageBucket: "letovshiyori.appspot.com",
+    messagingSenderId: "379203362104",
+    appId: "1:379203362104:web:20235be9bbbbfdbd6df5cd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const themeBtn = document.getElementById('themeBtn');
+  const body = document.body;
+  body.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+  themeBtn.addEventListener('click', () => {
+    const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+
+  async function loadStatus() {
+      try {
+          const docRef = doc(db, "settings", "release_status");
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              
+              document.getElementById('view-ep-num').textContent = data.episode || '???';
+              
+              const updateBadge = (id, status) => {
+                  const el = document.getElementById(id);
+                  el.className = 'status-badge'; 
+                  if (status === 'done') { el.classList.add('st-done'); el.textContent = 'Готово'; }
+                  else if (status === 'process') { el.classList.add('st-process'); el.textContent = 'В работе'; }
+                  else { el.classList.add('st-wait'); el.textContent = 'Ожидание'; }
+              };
+
+              updateBadge('view-translation', data.translation);
+              updateBadge('view-dub-max', data.dub_max);
+              updateBadge('view-dub-shiyori', data.dub_shiyori);
+              updateBadge('view-mixing', data.mixing);
+              updateBadge('view-upload', data.upload);
+
+              if (data.updatedAt) {
+                  const date = new Date(data.updatedAt);
+                  document.getElementById('view-updated').textContent = date.toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+              }
+          }
+      } catch (e) {
+          console.error("Ошибка статуса:", e);
+      }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadStatus);
+</script>
+</body>
+</html>
