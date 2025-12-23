@@ -18,10 +18,11 @@
   // --- Глобальные переменные ---
   let episodes = [];
   let currentIndex = -1;
-  const initialVisibleCount = 4;
+  const initialVisibleCount = 8; 
   let visibleEpisodesCount = initialVisibleCount;
   let watchedEpisodes = new Set();
-  const PLAYER_SOURCE_KEY = 'lastPlayerSource'; // <-- ДОБАВЛЕНО: Ключ для сохранения плеера
+  const PLAYER_SOURCE_KEY = 'lastPlayerSource'; 
+  let currentSortOrder = 'desc'; 
 
   // --- DOM Элементы ---
   const episodesGrid = document.getElementById('episodesGrid');
@@ -45,19 +46,17 @@
   const closeCopyrightModalBtn = document.getElementById('closeCopyrightModal');
   const loadMoreContainer = document.getElementById('loadMoreContainer');
   const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const loadMoreText = document.getElementById('loadMoreText');
+  const paginationInfo = document.getElementById('paginationInfo');
+  const sortSelect = document.getElementById('sortOrder');
+  const scrollTopBtn = document.getElementById('scrollTopBtn');
 
   // --- Функция обновления награды ---
   function updateBounty() {
     const bountyElem = document.getElementById('bountyAmount');
     if (!bountyElem) return;
-
-    // СТОИМОСТЬ ОДНОЙ СЕРИИ (1.5 млн белли)
     const pricePerEp = 1500000; 
-    
-    // Считаем общую сумму
     const totalBounty = watchedEpisodes.size * pricePerEp;
-
-    // Форматируем число с разделителями (1,500,000)
     bountyElem.innerText = totalBounty.toLocaleString('en-US');
   }
 
@@ -67,7 +66,7 @@
     if (saved) {
       watchedEpisodes = new Set(JSON.parse(saved));
     }
-    updateBounty(); // Обновляем награду при загрузке
+    updateBounty(); 
   }
 
   function saveWatchedStatus() {
@@ -81,38 +80,32 @@
 
     function update() {
       const now = new Date();
-      // Вычисляем следующее воскресенье
       const nextRelease = new Date();
       nextRelease.setDate(now.getDate() + (7 - now.getDay()) % 7);
-      nextRelease.setHours(23, 0, 0, 0); // <-- ВРЕМЯ УСТАНОВЛЕНО НА 23:00
+      nextRelease.setHours(23, 0, 0, 0); 
       
-      // Если сегодня воскресенье и время уже прошло, ставим на след. неделю
       if (now > nextRelease) {
         nextRelease.setDate(nextRelease.getDate() + 7);
       }
 
       const diff = nextRelease - now;
-      
       const d = Math.floor(diff / (1000 * 60 * 60 * 24));
       const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const m = Math.floor((diff / 1000 / 60) % 60);
-
-      // Красивый формат с ведущими нулями (если нужно)
       countElem.innerText = `${d}д ${h}ч ${m}м`;
     }
 
-    setInterval(update, 60000); // Обновляем раз в минуту
+    setInterval(update, 60000); 
     update();
   }
 
   // --- Функции рендеринга скелетона ---
   function renderSkeletons() {
     episodesGrid.innerHTML = '';
-    // Генерируем столько скелетов, сколько серий показываем по умолчанию
     for (let i = 0; i < initialVisibleCount; i++) {
         const el = document.createElement('div');
         el.className = 'ep';
-        el.style.pointerEvents = 'none'; // Чтобы нельзя было нажать во время загрузки
+        el.style.pointerEvents = 'none'; 
         el.innerHTML = `
           <div class="thumb skeleton-loader" style="border:none;"></div>
           <div class="meta" style="width:100%">
@@ -123,15 +116,27 @@
     }
   }
 
-  // --- Функции ---
+  // --- Сортировка ---
+  function sortEpisodes() {
+    if (currentSortOrder === 'desc') {
+        episodes.sort((a, b) => b.id - a.id);
+    } else {
+        episodes.sort((a, b) => a.id - b.id);
+    }
+    renderList(search.value);
+  }
+
+  // --- Функции Загрузки ---
   async function loadEpisodes() {
-    // Включаем скелетон перед загрузкой
     renderSkeletons();
     
     try {
       const q = query(episodesCollection, orderBy("id", "desc"));
       const querySnapshot = await getDocs(q);
       episodes = querySnapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
+      
+      sortEpisodes();
+      
       renderList();
       renderModalTable();
       
@@ -139,7 +144,6 @@
       const indexToLoad = (savedIndex !== null && episodes[savedIndex]) ? parseInt(savedIndex, 10) : 0;
       
       if (episodes.length > 0) {
-        // При первой загрузке страницы скроллить не нужно (false)
         loadEpisode(indexToLoad, false); 
       } else {
         playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
@@ -163,11 +167,11 @@
     } else {
         episodesToRender.forEach((ep, loopIndex) => {
             const originalIndex = episodes.findIndex(e => e.firestoreId === ep.firestoreId);
+            
             const el = document.createElement('div');
             el.className = 'ep';
             
-            // Если это самый первый элемент в списке (и нет поиска), добавляем класс NEW
-            if (!term && loopIndex === 0) {
+            if (!term && loopIndex === 0 && currentSortOrder === 'desc') {
                 el.classList.add('new-episode');
             }
 
@@ -197,10 +201,9 @@
                     el.classList.add('watched');
                 }
                 saveWatchedStatus(); 
-                updateBounty(); // Обновляем награду при клике
+                updateBounty(); 
 
                 if (currentIndex !== originalIndex) {
-                    // ТУТ ВАЖНО: Передаем true, чтобы скроллить при клике из списка
                     loadEpisode(originalIndex, true);
                 }
             };
@@ -211,20 +214,24 @@
         });
     }
 
-    if (filteredEpisodes.length > initialVisibleCount) {
+    if (filteredEpisodes.length > visibleEpisodesCount) {
         loadMoreContainer.style.display = 'flex';
-        if (visibleEpisodesCount >= filteredEpisodes.length && filteredEpisodes.length > 0) {
-            loadMoreBtn.classList.add('expanded');
-        } else {
-            loadMoreBtn.classList.remove('expanded');
-        }
+        loadMoreText.textContent = 'Показать еще';
+        loadMoreBtn.classList.remove('expanded');
+    } else if (visibleEpisodesCount > initialVisibleCount && filteredEpisodes.length > 0) {
+        loadMoreContainer.style.display = 'flex';
+        loadMoreText.textContent = 'Свернуть';
+        loadMoreBtn.classList.add('expanded');
     } else {
         loadMoreContainer.style.display = 'none';
     }
+
+    const currentCount = Math.min(visibleEpisodesCount, filteredEpisodes.length);
+    paginationInfo.textContent = `Показано ${currentCount} из ${filteredEpisodes.length}`;
+
     markActive();
   }
 
-  // Добавлен аргумент shouldScroll (по умолчанию false)
   function loadEpisode(idx, shouldScroll = false) {
     if (idx < 0 || idx >= episodes.length) return;
     currentIndex = idx;
@@ -232,13 +239,13 @@
     
     const ep = episodes[idx];
     
-    // --- ИЗМЕНЕНИЕ: Загружаем сохраненный плеер ---
-    // 1. Загружаем сохраненный плеер или используем 'dzen' по умолчанию (как в HTML)
+    // --- ИЗМЕНЕНИЕ: Добавлен суффикс названия сайта ---
+    document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
+
     const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'dzen'; 
-    playerSourceSelect.value = savedSource; // Устанавливаем значение в SELECT
+    playerSourceSelect.value = savedSource; 
     
-    const selectedPlayer = playerSourceSelect.value; // Читаем установленное (или сохраненное) значение
-    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+    const selectedPlayer = playerSourceSelect.value; 
     
     const iframeCode = ep.players[selectedPlayer];
     playerEmbed.innerHTML = iframeCode 
@@ -249,7 +256,6 @@
     metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
     markActive();
 
-    // Логика скролла теперь срабатывает только если shouldScroll === true
     if (shouldScroll && window.innerWidth < 980) {
         const playerSection = document.getElementById('playerTitle');
         if(playerSection) {
@@ -300,7 +306,6 @@
     allTbody.querySelectorAll('button').forEach(b => {
       b.onclick = () => {
         const idx = Number(b.getAttribute('data-idx'));
-        // При выборе из модального окна тоже скроллим (true)
         loadEpisode(idx, true);
         closeModal();
       };
@@ -310,27 +315,27 @@
   // --- Обработчики событий ---
 
   prevBtn.addEventListener('click', () => {
-    // При переключении кнопками скроллить НЕ нужно (не передаем true)
     if (currentIndex < episodes.length - 1) loadEpisode(currentIndex + 1);
   });
   nextBtn.addEventListener('click', () => {
-    // При переключении кнопками скроллить НЕ нужно
     if (currentIndex > 0) loadEpisode(currentIndex - 1);
   });
   playerSourceSelect.addEventListener('change', () => {
-    // --- ИЗМЕНЕНИЕ: Сохраняем новый выбор плеера ---
     const newPlayer = playerSourceSelect.value;
     localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer); 
-    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
-    
     if (currentIndex !== -1) {
-      // При смене плеера мы уже на месте, скролл не нужен
       loadEpisode(currentIndex);
     }
   });
   search.addEventListener('input', (e) => {
     visibleEpisodesCount = initialVisibleCount;
     renderList(e.target.value);
+  });
+
+  sortSelect.addEventListener('change', (e) => {
+    currentSortOrder = e.target.value;
+    visibleEpisodesCount = initialVisibleCount; 
+    sortEpisodes();
   });
 
   loadMoreBtn.addEventListener('click', () => {
@@ -344,15 +349,36 @@
         setTimeout(() => {
             visibleEpisodesCount = initialVisibleCount;
             renderList(search.value);
+            episodesGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 300);
     } else {
         const term = search.value.trim().toLowerCase();
         const filteredEpisodes = episodes.filter(ep =>
             term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
         );
-        visibleEpisodesCount = filteredEpisodes.length;
+        
+        const nextCount = visibleEpisodesCount + 12;
+        
+        if (nextCount >= filteredEpisodes.length) {
+             visibleEpisodesCount = filteredEpisodes.length;
+        } else {
+             visibleEpisodesCount = nextCount;
+        }
+        
         renderList(search.value);
     }
+  });
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 500) {
+        scrollTopBtn.classList.add('visible');
+    } else {
+        scrollTopBtn.classList.remove('visible');
+    }
+  });
+  
+  scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   allBtn.addEventListener('click', openModal);
@@ -418,21 +444,18 @@
   // --- Функция Инициализации Снега ---
   function initSnowEffect() {
     const now = new Date();
-    const month = now.getMonth(); // 0 = Январь, 11 = Декабрь
+    const month = now.getMonth(); 
     const day = now.getDate();
 
-    // Проверка даты: (Декабрь и день >= 10) ИЛИ (Январь и день <= 20)
     const isSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
 
-    if (!isSeason) return; // Если не сезон, выходим
+    if (!isSeason) return; 
 
-    // Создаем контейнер
     const wrapper = document.createElement('div');
     wrapper.className = 'snow-wrapper';
     document.body.appendChild(wrapper);
 
-    // Создаем снежинки
-    const flakesCount = 50; // Легкий снег
+    const flakesCount = 50; 
     for (let i = 0; i < flakesCount; i++) {
       const flake = document.createElement('div');
       flake.className = 'snowflake';
@@ -460,6 +483,6 @@
     document.body.setAttribute('data-theme', savedTheme);
     loadWatchedStatus();
     loadEpisodes();
-    startCountdown(); // Запуск таймера
-    initSnowEffect(); // Запуск снега
+    startCountdown(); 
+    initSnowEffect(); 
   });
