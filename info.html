@@ -12,13 +12,28 @@
   .info-card { background: var(--component-bg); border: 1px solid var(--component-border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; backdrop-filter: blur(10px); }
   h2 { margin-top: 0; color: var(--text); font-size: 20px; border-bottom: 1px solid var(--component-border); padding-bottom: 12px; margin-bottom: 16px; }
   
-  details { background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 10px; transition: all 0.2s; }
+  /* --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ DETAILS --- */
+  details { 
+    background: rgba(255,255,255,0.03); 
+    border-radius: 12px; 
+    margin-bottom: 10px; 
+    transition: background 0.2s; /* Анимируем только фон через CSS, высоту через JS */
+    overflow: hidden; /* Важно для анимации скрытия */
+  }
   details[open] { background: rgba(255,255,255,0.05); }
+  
   summary { padding: 14px; cursor: pointer; font-weight: 600; list-style: none; position: relative; padding-right: 40px; }
   summary::-webkit-details-marker { display: none; }
   summary::after { content: '+'; position: absolute; right: 14px; color: var(--muted); }
   details[open] summary::after { content: '−'; color: var(--accent-c); }
-  .faq-content { padding: 0 14px 14px 14px; color: var(--muted); line-height: 1.6; font-size: 14px; }
+  
+  .faq-content { 
+    padding: 0 14px 14px 14px; 
+    color: var(--muted); 
+    line-height: 1.6; 
+    font-size: 14px; 
+    will-change: height, opacity; /* Оптимизация производительности */
+  }
 
   .status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--component-border); }
   .status-row:last-child { border-bottom: none; }
@@ -34,7 +49,6 @@
   .team-info div { font-weight: 700; font-size: 15px; }
   .team-info span { font-size: 12px; color: var(--muted); }
   
-  /* Стили для ссылок на команду */
   .team-link { color: var(--text); text-decoration: none; transition: color 0.2s; }
   .team-link:hover { color: var(--accent-c); }
   
@@ -180,13 +194,10 @@
       }
   }
 
-  // --- Функция Снега (скопирована из main.js) ---
   function initSnowEffect() {
     const now = new Date();
     const month = now.getMonth(); 
     const day = now.getDate();
-
-    // Снег работает с 10 декабря по 20 января (логика из main.js)
     const isSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
 
     if (!isSeason) return; 
@@ -199,7 +210,6 @@
     for (let i = 0; i < flakesCount; i++) {
       const flake = document.createElement('div');
       flake.className = 'snowflake';
-      
       const size = Math.random() * 3 + 2; 
       const left = Math.random() * 100; 
       const duration = Math.random() * 10 + 10; 
@@ -212,18 +222,63 @@
       flake.style.animationDuration = `${duration}s`;
       flake.style.animationDelay = `${delay}s`;
       flake.style.opacity = opacity;
-
       wrapper.appendChild(flake);
     }
   }
 
+  // --- Функция анимации Details (Accordion) ---
+  function initDetailsAnimation() {
+    // Находим все элементы details
+    const details = document.querySelectorAll('details');
+
+    details.forEach(detail => {
+      const summary = detail.querySelector('summary');
+      const content = detail.querySelector('.faq-content');
+
+      // Перехватываем клик по заголовку
+      summary.addEventListener('click', (e) => {
+        e.preventDefault(); // Отключаем стандартное поведение
+
+        // Если уже открыто — закрываем
+        if (detail.open) {
+          const startHeight = content.offsetHeight;
+          
+          // Анимация закрытия
+          const animation = content.animate(
+            [
+              { height: startHeight + 'px', opacity: 1, paddingBottom: '14px' },
+              { height: '0px', opacity: 0, paddingBottom: '0px' }
+            ], 
+            { duration: 300, easing: 'ease-in-out' }
+          );
+
+          animation.onfinish = () => {
+            detail.removeAttribute('open');
+          };
+          
+        } else {
+          // Если закрыто — открываем
+          detail.setAttribute('open', ''); // Сначала ставим атрибут, чтобы браузер отрендерил контент
+          const endHeight = content.offsetHeight; // Замеряем высоту контента
+          
+          // Анимация открытия
+          content.animate(
+            [
+              { height: '0px', opacity: 0, paddingBottom: '0px' },
+              { height: endHeight + 'px', opacity: 1, paddingBottom: '14px' }
+            ], 
+            { duration: 300, easing: 'ease-in-out' }
+          );
+        }
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
       loadStatus();
-      initSnowEffect(); // Запуск снега
+      initSnowEffect();
+      initDetailsAnimation(); // Запуск анимации
   });
 </script>
 </body>
 </html>
-
-
-
