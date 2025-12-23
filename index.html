@@ -155,14 +155,23 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
       <div class="left-list">
         <div class="list-controls">
           <input id="search" class="search" placeholder="Поиск по названию..." aria-label="Поиск по эпизодам">
+          <div class="custom-select sort-select">
+            <select id="sortOrder" aria-label="Сортировка">
+              <option value="desc">Сначала новые</option>
+              <option value="asc">Сначала старые</option>
+            </select>
+          </div>
         </div>
         <div class="episodes-grid" id="episodesGrid" tabindex="0" aria-live="polite"></div>
-        <div id="loadMoreContainer" style="display: none;">
+        
+        <div id="loadMoreContainer" style="display: none; flex-direction: column; align-items: center; gap: 8px;">
           <button id="loadMoreBtn" class="btn ghost" title="Показать/скрыть серии">
+            <span id="loadMoreText">Показать еще</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
+          <div id="paginationInfo" style="font-size: 12px; color: var(--muted);"></div>
         </div>
       </div>
     </section>
@@ -197,7 +206,7 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
             <p>Все права на аудио и видеоматериалы, представленные на сайте, принадлежат их законным правообладателям. Мы не претендуем на авторство и не извлекаем коммерческую выгоду из их использования.</p>
             <p>Весь контент (видеофайлы) размещен на сторонних ресурсах и встроен в плеер с помощью технологии iframe. Наш сайт не хранит никаких нелегальных материалов, а лишь предоставляет ссылки на них.</p>
             <p>Если вы являетесь правообладателем и считаете, что ваши права были нарушены, пожалуйста, свяжитесь с нами по электронной почте. Мы готовы оперативно рассмотреть ваш запрос и удалить спорные материалы.</p>
-            <p><strong>Почта для связи:</strong> В случаях нарушения авторских прав или сотрудничества — обращайтесь на почту: <p><strong>Почта для связи:</strong> <a href="mailto:support@letovshiyori.org" style="color: var(--accent-c);">support@letovshiyori.org</a></p>
+            <p><strong>Почта для связи:</strong> В случаях нарушения авторских прав или сотрудничества — обращайтесь на почту: <a href="mailto:support@letovshiyori.org" style="color: var(--accent-c);">support@letovshiyori.org</a></p>
         </div>
     </div>
   </div>
@@ -225,6 +234,10 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
       </p>
     </div>
   </footer>
+
+  <button id="scrollTopBtn" class="btn glass-effect" title="Наверх" aria-label="Прокрутить наверх">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module" src="js/main.js"></script>
     <div id="tg-floating-button" class="tg-button-style">
