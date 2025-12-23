@@ -43,7 +43,7 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const shareBtn = document.getElementById('shareBtn');
 const closeModalBtn = document.getElementById('closeModal');
-// Убраны copyrightBtn и reportBtn, так как их нет в HTML
+// copyrightBtn УДАЛЕН, так как кнопки больше нет в HTML
 const copyrightModal = document.getElementById('copyrightModal');
 const closeCopyrightModalBtn = document.getElementById('closeCopyrightModal');
 const loadMoreContainer = document.getElementById('loadMoreContainer');
@@ -83,9 +83,11 @@ function startCountdown() {
   function update() {
     const now = new Date();
     const nextRelease = new Date();
+    // Расчет следующего воскресенья
     nextRelease.setDate(now.getDate() + (7 - now.getDay()) % 7);
     nextRelease.setHours(23, 0, 0, 0); 
     
+    // Если воскресенье уже прошло (или сейчас воскресенье вечер), ставим следующее
     if (now > nextRelease) {
       nextRelease.setDate(nextRelease.getDate() + 7);
     }
@@ -103,6 +105,7 @@ function startCountdown() {
 
 // --- Функции рендеринга скелетона ---
 function renderSkeletons() {
+  if (!episodesGrid) return;
   episodesGrid.innerHTML = '';
   for (let i = 0; i < initialVisibleCount; i++) {
       const el = document.createElement('div');
@@ -148,16 +151,17 @@ async function loadEpisodes() {
     if (episodes.length > 0) {
       loadEpisode(indexToLoad, false); 
     } else {
-      playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
-      playerTitle.textContent = 'Нет доступных серий';
+      if(playerEmbed) playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
+      if(playerTitle) playerTitle.textContent = 'Нет доступных серий';
     }
   } catch (error) {
     console.error("Ошибка при загрузке серий из Firestore: ", error);
-    episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--accent-c);">Ошибка загрузки данных.</div>`;
+    if(episodesGrid) episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--accent-c);">Ошибка загрузки данных.</div>`;
   }
 }
 
 function renderList(filter = '') {
+  if (!episodesGrid) return;
   const term = filter.trim().toLowerCase();
   const filteredEpisodes = episodes.filter(ep =>
       term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
@@ -216,20 +220,24 @@ function renderList(filter = '') {
       });
   }
 
-  if (filteredEpisodes.length > visibleEpisodesCount) {
-      loadMoreContainer.style.display = 'flex';
-      loadMoreText.textContent = 'Показать еще';
-      loadMoreBtn.classList.remove('expanded');
-  } else if (visibleEpisodesCount > initialVisibleCount && filteredEpisodes.length > 0) {
-      loadMoreContainer.style.display = 'flex';
-      loadMoreText.textContent = 'Свернуть';
-      loadMoreBtn.classList.add('expanded');
-  } else {
-      loadMoreContainer.style.display = 'none';
+  if (loadMoreContainer) {
+      if (filteredEpisodes.length > visibleEpisodesCount) {
+          loadMoreContainer.style.display = 'flex';
+          loadMoreText.textContent = 'Показать еще';
+          loadMoreBtn.classList.remove('expanded');
+      } else if (visibleEpisodesCount > initialVisibleCount && filteredEpisodes.length > 0) {
+          loadMoreContainer.style.display = 'flex';
+          loadMoreText.textContent = 'Свернуть';
+          loadMoreBtn.classList.add('expanded');
+      } else {
+          loadMoreContainer.style.display = 'none';
+      }
   }
 
-  const currentCount = Math.min(visibleEpisodesCount, filteredEpisodes.length);
-  paginationInfo.textContent = `Показано ${currentCount} из ${filteredEpisodes.length}`;
+  if (paginationInfo) {
+      const currentCount = Math.min(visibleEpisodesCount, filteredEpisodes.length);
+      paginationInfo.textContent = `Показано ${currentCount} из ${filteredEpisodes.length}`;
+  }
 
   markActive();
 }
@@ -244,19 +252,19 @@ function loadEpisode(idx, shouldScroll = false) {
   document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
 
   const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'dzen'; 
-  playerSourceSelect.value = savedSource; 
+  if(playerSourceSelect) playerSourceSelect.value = savedSource; 
   
-  const selectedPlayer = playerSourceSelect.value; 
+  const selectedPlayer = playerSourceSelect ? playerSourceSelect.value : 'dzen'; 
   
   const iframeCode = ep.players[selectedPlayer];
-  playerEmbed.innerHTML = iframeCode 
-    ? iframeCode 
-    : `<span>Для плеера "${selectedPlayer.toUpperCase()}" видео не найдено.</span>`;
-  playerTitle.textContent = ep.title;
-  playerSub.textContent = `${ep.date} • ${ep.quality}`;
-  metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
-  
-  // Убрана логика reportBtn, так как кнопки больше нет
+  if(playerEmbed) {
+      playerEmbed.innerHTML = iframeCode 
+        ? iframeCode 
+        : `<span>Для плеера "${selectedPlayer.toUpperCase()}" видео не найдено.</span>`;
+  }
+  if(playerTitle) playerTitle.textContent = ep.title;
+  if(playerSub) playerSub.textContent = `${ep.date} • ${ep.quality}`;
+  if(metaText) metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
 
   markActive();
 
@@ -272,6 +280,8 @@ function markActive() {
   if (currentIndex < 0) return;
   const currentEpisodeId = episodes[currentIndex]?.firestoreId;
   if (!currentEpisodeId) return;
+  if (!episodesGrid) return;
+  
   const nodes = Array.from(episodesGrid.children);
   nodes.forEach(node => {
       if (node.dataset.firestoreId === currentEpisodeId) {
@@ -282,7 +292,6 @@ function markActive() {
   });
 }
 
-// Debounce для поиска (Оптимизация)
 function debounce(func, timeout = 300){
   let timer;
   return (...args) => {
@@ -293,16 +302,22 @@ function debounce(func, timeout = 300){
 
 function openModal() {
   renderModalTable('');
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-  modalSearch.focus();
+  if(modal) {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+  }
+  if(modalSearch) modalSearch.focus();
 }
+
 function closeModal() {
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
+  if(modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+  }
 }
 
 function renderModalTable(filter = '') {
+  if(!allTbody) return;
   allTbody.innerHTML = '';
   const q = filter.trim().toLowerCase();
   episodes.forEach((ep, idx) => {
@@ -327,13 +342,14 @@ function renderModalTable(filter = '') {
 
 // --- Обработчики событий ---
 
-prevBtn.addEventListener('click', () => {
+if(prevBtn) prevBtn.addEventListener('click', () => {
   if (currentIndex < episodes.length - 1) loadEpisode(currentIndex + 1);
 });
-nextBtn.addEventListener('click', () => {
+if(nextBtn) nextBtn.addEventListener('click', () => {
   if (currentIndex > 0) loadEpisode(currentIndex - 1);
 });
-playerSourceSelect.addEventListener('change', () => {
+
+if(playerSourceSelect) playerSourceSelect.addEventListener('change', () => {
   const newPlayer = playerSourceSelect.value;
   localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer); 
   
@@ -344,20 +360,19 @@ playerSourceSelect.addEventListener('change', () => {
   }
 });
 
-// Используем Debounce для поиска
 const processSearch = debounce((e) => {
   visibleEpisodesCount = initialVisibleCount;
   renderList(e.target.value);
 });
-search.addEventListener('input', processSearch);
+if(search) search.addEventListener('input', processSearch);
 
-sortSelect.addEventListener('change', (e) => {
+if(sortSelect) sortSelect.addEventListener('change', (e) => {
   currentSortOrder = e.target.value;
   visibleEpisodesCount = initialVisibleCount; 
   sortEpisodes();
 });
 
-loadMoreBtn.addEventListener('click', () => {
+if(loadMoreBtn) loadMoreBtn.addEventListener('click', () => {
   const isExpanded = loadMoreBtn.classList.contains('expanded');
 
   if (isExpanded) {
@@ -389,6 +404,7 @@ loadMoreBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('scroll', () => {
+  if(!scrollTopBtn) return;
   if (window.scrollY > 500) {
       scrollTopBtn.classList.add('visible');
   } else {
@@ -396,16 +412,16 @@ window.addEventListener('scroll', () => {
   }
 });
 
-scrollTopBtn.addEventListener('click', () => {
+if(scrollTopBtn) scrollTopBtn.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-allBtn.addEventListener('click', openModal);
-closeModalBtn.addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-modalSearch.addEventListener('input', (e) => renderModalTable(e.target.value));
+if(allBtn) allBtn.addEventListener('click', openModal);
+if(closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+if(modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+if(modalSearch) modalSearch.addEventListener('input', (e) => renderModalTable(e.target.value));
 
-shareBtn.addEventListener('click', async () => {
+if(shareBtn) shareBtn.addEventListener('click', async () => {
   const shareData = {
     title: 'Ван-Пис в озвучке Макс Летов & ShiYori',
     text: 'Смотрю Ван-Пис в новой озвучке!',
@@ -427,7 +443,7 @@ shareBtn.addEventListener('click', async () => {
   }
 });
 
-themeBtn.addEventListener('click', () => {
+if(themeBtn) themeBtn.addEventListener('click', () => {
   const body = document.body;
   const currentTheme = body.getAttribute('data-theme');
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -435,8 +451,7 @@ themeBtn.addEventListener('click', () => {
   localStorage.setItem('theme', newTheme);
 });
 
-// УБРАНЫ обработчики для copyrightBtn, так как кнопки больше нет.
-// Логика модального окна оставлена на случай если захотите вернуть кнопку.
+// Кнопки для модального окна Copyright (оставим, если модалка есть в HTML)
 if (copyrightModal && closeCopyrightModalBtn) {
     closeCopyrightModalBtn.addEventListener('click', () => {
         copyrightModal.classList.remove('open');
@@ -452,7 +467,7 @@ if (copyrightModal && closeCopyrightModalBtn) {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (modal.classList.contains('open')) closeModal();
+    if (modal && modal.classList.contains('open')) closeModal();
     if (copyrightModal && copyrightModal.classList.contains('open')) {
       copyrightModal.classList.remove('open');
       copyrightModal.setAttribute('aria-hidden', 'true');
