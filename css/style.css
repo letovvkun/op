@@ -74,30 +74,27 @@
     background-size: cover;
     
     /* --- ЛОГИКА ДЛЯ ТЕМНОЙ ТЕМЫ (ПО УМОЛЧАНИЮ) --- */
-    /* Используем маску прозрачности - это дает мягкий эффект */
     mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
     -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
   }
   
   /* --- ЛОГИКА ДЛЯ СВЕТЛОЙ ТЕМЫ --- */
-  /* Отключаем маску (чтобы не было серости) */
   [data-theme="light"] .site-banner {
     mask-image: none;
     -webkit-mask-image: none;
   }
 
-  /* Добавляем градиентный оверлей ТОЛЬКО для светлой темы */
   .site-banner::after {
     content: '';
     position: absolute;
     inset: 0;
     background: linear-gradient(to bottom, transparent 60%, var(--bg-1) 100%);
     pointer-events: none;
-    display: none; /* Скрыто на темной теме */
+    display: none; 
   }
 
   [data-theme="light"] .site-banner::after {
-    display: block; /* Показываем на светлой теме */
+    display: block; 
   }
   
   .social-links-bar {
@@ -360,6 +357,7 @@
   .list-controls {
     display: flex;
     padding: 0 6px 12px 6px;
+    gap: 8px; /* Добавлено расстояние между поиском и сортировкой */
   }
 
   .search{
@@ -367,6 +365,12 @@
     border:1px solid var(--component-border);
     background:var(--component-bg);
     color:var(--text);font-size:14px; outline:none;
+  }
+  
+  /* Стили для селекта сортировки */
+  .sort-select select {
+    min-width: 140px;
+    padding-right: 28px;
   }
   
   .episodes-grid{
@@ -467,11 +471,13 @@
   }
 
   #loadMoreBtn {
-    padding: 0;
-    width: 42px;
+    padding: 0 14px;
     height: 42px;
-    border-radius: 50%;
+    border-radius: 999px; /* Сделал кнопку овальной для текста */
     justify-content: center;
+    gap: 8px; /* Расстояние между текстом и иконкой */
+    display: inline-flex;
+    align-items: center;
   }
   #loadMoreBtn svg {
     transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
@@ -553,6 +559,32 @@
     object-fit: contain;
   }
   
+  /* СТИЛИ ДЛЯ КНОПКИ НАВЕРХ */
+  #scrollTopBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px; /* Позиция справа, как у Telegram кнопки, но можно подвинуть левее если мешает */
+    right: 80px; /* Сдвинул левее, чтобы не перекрывать чат */
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    padding: 0;
+  }
+  #scrollTopBtn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #scrollTopBtn:hover {
+    transform: translateY(-3px);
+  }
+  
   @media (max-width:980px){
     .hero{ grid-template-columns:1fr }
     .meta-card{ order:2 }
@@ -586,6 +618,12 @@
       max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .table .action-cell { width: auto; }
+    
+    /* На мобильном кнопку наверх можно сдвинуть выше телеграма или левее */
+    #scrollTopBtn {
+        right: 20px;
+        bottom: 80px; /* Над кнопкой телеграма */
+    }
   }
 
   /* --- SKELETON LOADING --- */
