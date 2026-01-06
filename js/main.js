@@ -1,6 +1,6 @@
 // --- FIREBASE: Импорт и инициализация ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
 
 const firebaseConfig = {
@@ -25,6 +25,8 @@ let visibleEpisodesCount = initialVisibleCount;
 let watchedEpisodes = new Set();
 const PLAYER_SOURCE_KEY = 'lastPlayerSource'; 
 let currentSortOrder = 'desc'; 
+let timerInterval = null;
+let logPoseTargetDate = null; // Для хранения даты из админки
 
 // --- DOM Элементы ---
 const episodesGrid = document.getElementById('episodesGrid');
@@ -43,7 +45,6 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const shareBtn = document.getElementById('shareBtn');
 const closeModalBtn = document.getElementById('closeModal');
-// copyrightBtn УДАЛЕН, так как кнопки больше нет в HTML
 const copyrightModal = document.getElementById('copyrightModal');
 const closeCopyrightModalBtn = document.getElementById('closeCopyrightModal');
 const loadMoreContainer = document.getElementById('loadMoreContainer');
@@ -76,31 +77,59 @@ function saveWatchedStatus() {
 }
 
 // --- Функция Таймера (Log Pose) ---
+
+// 1. Сначала загружаем дату из базы
+async function initLogPoseTimer() {
+  const countElem = document.getElementById('countdown');
+  if(!countElem) return;
+
+  try {
+    const docRef = doc(db, 'settings', 'log_pose');
+    const snap = await getDoc(docRef);
+    if (snap.exists() && snap.data().targetDate) {
+      logPoseTargetDate = new Date(snap.data().targetDate);
+      startCountdown(); // Запускаем таймер
+    } else {
+      countElem.innerText = "Ждем инфо";
+    }
+  } catch (error) {
+    console.error("Ошибка таймера:", error);
+    countElem.innerText = "--:--:--";
+  }
+}
+
+// 2. Сам процесс отсчета
 function startCountdown() {
   const countElem = document.getElementById('countdown');
-  if (!countElem) return;
+  if (!countElem || !logPoseTargetDate) return;
 
   function update() {
     const now = new Date();
-    const nextRelease = new Date();
-    // Расчет следующего воскресенья
-    nextRelease.setDate(now.getDate() + (7 - now.getDay()) % 7);
-    nextRelease.setHours(23, 0, 0, 0); 
-    
-    // Если воскресенье уже прошло (или сейчас воскресенье вечер), ставим следующее
-    if (now > nextRelease) {
-      nextRelease.setDate(nextRelease.getDate() + 7);
+    const diff = logPoseTargetDate - now;
+
+    if (diff <= 0) {
+      countElem.innerText = "Уже скоро!";
+      if (timerInterval) clearInterval(timerInterval);
+      return;
     }
 
-    const diff = nextRelease - now;
     const d = Math.floor(diff / (1000 * 60 * 60 * 24));
     const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const m = Math.floor((diff / 1000 / 60) % 60);
-    countElem.innerText = `${d}д ${h}ч ${m}м`;
+    
+    // Форматирование для красоты (01 вместо 1)
+    const hStr = h < 10 ? '0' + h : h;
+    const mStr = m < 10 ? '0' + m : m;
+
+    if (d > 0) {
+        countElem.innerText = `${d}д ${hStr}ч ${mStr}м`;
+    } else {
+        countElem.innerText = `${hStr}ч ${mStr}м`;
+    }
   }
 
-  setInterval(update, 60000); 
-  update();
+  update(); // Обновить сразу
+  timerInterval = setInterval(update, 60000); 
 }
 
 // --- Функции рендеринга скелетона ---
@@ -517,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.setAttribute('data-theme', savedTheme);
   loadWatchedStatus();
   loadEpisodes();
-  startCountdown(); 
+  // Теперь запускаем таймер с загрузкой из базы
+  initLogPoseTimer(); 
   initSnowEffect(); 
 });
