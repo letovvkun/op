@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="ru">
 <head>
+<!-- Preconnect для ускорения загрузки ресурсов -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.plyr.io">
+<link rel="preconnect" href="https://cdn-icons-png.flaticon.com">
+
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -24,32 +30,62 @@
 <meta property="og:url" content="https://letovshiyori.org/">
 <meta property="og:title" content="Ван-Пис в озвучке Макс Летов & ShiYori">
 <meta property="og:description" content="Новая русская озвучка «Ван-Пис» с 1123 серии. Новые эпизоды каждое воскресенье!">
-<meta property="og:image" content="https://i.ibb.co/MkdKkQSg/1346906.webp">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/1346906.webp">
 
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="https://letovshiyori.org/">
 <meta property="twitter:title" content="Ван-Пис в озвучке Макс Летов & ShiYori">
 <meta property="twitter:description" content="Новая фанатская озвучка «Ван-Пис» с 1123 серии. Новые эпизоды каждое воскресенье!">
-<meta property="twitter:image" content="https://https://i.ibb.co/MkdKkQSg/1346906.webp">
+<meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/1346906.webp">
 <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
 <link rel="icon" href="data:," />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 <link rel="stylesheet" href="css/style.css">
 
 <style>
-/* Базовый стиль для иконок в подвале для плавного перехода */
-.site-footer .js-themable-icon {
-    transition: filter 0.3s ease;
+/* Кастомизация Plyr под цвета сайта */
+:root {
+  --plyr-color-main: #ffb86b;
+  --plyr-video-background: #000;
+  --plyr-border-radius: 10px;
 }
+.plyr { width: 100%; height: 100%; border-radius: 10px; }
 
-/* Стили для ТЕМНОЙ ТЕМЫ: инвертирует цвет всех иконок */
-body[data-theme="dark"] .site-footer .js-themable-icon {
-    /* Инвертирует цвет: черный становится белым, синий в оранжевый и т.д. */
-    filter: invert(1);
-}
+/* Базовый стиль для иконок в подвале для плавного перехода */
+.site-footer .js-themable-icon { transition: filter 0.3s ease; }
+body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
 </style>
 </head>
 <body data-theme="dark">
+
+  <div class="floating-nav">
+      <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+      </button>
+      <div id="floatingMenu" class="floating-menu">
+          <a href="catalog.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Каталог тайтлов
+          </a>
+          <a href="tracker.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a8 8 0 0 1 16 0v2"></path><path d="M4 11h4v4H4z"></path><path d="M16 11h4v4h-4z"></path></svg>
+              Торренты
+          </a>
+          <a href="info.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              О нас / FAQ
+          </a>
+          <a href="game.html" class="floating-menu-item" style="color: var(--accent-c);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M6 12h4"></path><path d="M8 10v4"></path><path d="M15 13h.01"></path><path d="M18 11h.01"></path></svg>
+              Мини-игра
+          </a>
+      </div>
+  </div>
 
   <div class="site-banner" role="banner"></div>
 
@@ -65,7 +101,7 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
     <header class="top">
       <div class="brand">
         <div class="logo-badge">
-          <img src="https://i.ibb.co/F2Lr9rP/image.webp" alt="Логотип">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип">
         </div>
         <div class="title">
           <h1>Ван-Пис в озвучке Макс Летов & ShiYori</h1>
@@ -75,7 +111,7 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
       <div class="controls-top">
         
         <div class="bounty-badge" title="Твоя награда за голову">
-            <img src="https://i.imghippo.com/files/nlB5629Eo.png" alt="B">
+            <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/Berrysymbol.svg.webp" alt="B">
             <span id="bountyAmount">0</span>
             <span class="currency-symbol">-</span>
         </div>
@@ -109,11 +145,7 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
           <label for="playerSource">Выбор плеера:</label>
           <div class="custom-select">
             <select id="playerSource" name="playerSource">
-              <option value="dzen">Dzen | 4K</option> 
-               <option value="subtitles">Dzen | Субтитры</option>
-                <option value="mega">Moon Player | 1080p</option>
-              <option value="kodik">Kodik | 720p</option>
-              
+              <option value="">Загрузка...</option>
             </select>
           </div>
         </div>
@@ -146,12 +178,12 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
         <h3>О нас</h3>
         <div class="meta-row">Сайт дуэта по озвучке Ван-Пис - ShiYori & Макс Летов. Озвучиваем с 1123 серии!
         <br><br>
-        https://t.me/boost/maxletovv_dub
-        <br>
+        Уже больше года радуем наших зрителей качественной озвучкой и субтитрами. 
+        <br><br>
         https://www.tiktok.com/@max.letovv_dub</div>
         
         <div style="margin-top: 12px;">
-            <a href="info" class="btn ghost" style="width: 100%; justify-content: center;">FAQ / Инфо</a>
+            <a href="info.html" class="btn ghost" style="width: 100%; justify-content: center;">FAQ / Инфо</a>
         </div>
       </aside>
     </section>
@@ -220,16 +252,16 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
     <div class="footer-content">
       <div class="footer-socials">
         <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
-          <img src="https://www.svgrepo.com/show/394493/telegram.svg" alt="Telegram" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon">
         </a>
         <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
-          <img src="https://assets.streamlinehq.com/image/private/w_300,h_300,ar_1/f_auto/v1/icons/logos/boosty-p8nrg4ij2ee07h54b69u.png/boosty-664rw67wn5y8ls2vgiirn.png?_a=DATAg1AAZAA0" alt="Boosty" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon">
         </a>
         <a href="https://www.youtube.com/@max.letovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="YouTube">
-          <img src="https://www.svgrepo.com/show/513089/youtube-168.svg" alt="YouTube" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon">
         </a>
         <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
-          <img src="https://www.svgrepo.com/show/473806/tiktok.svg" alt="TikTok" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon">
         </a>
       </div>
       <p class="footer-text">
@@ -244,8 +276,12 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
   </button>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module" src="js/main.js"></script>
-    <div id="tg-floating-button" class="tg-button-style">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+<script type="module" src="js/main.js"></script>
+
+<!-- Виджет Телеграм-комментариев -->
+<div id="tg-floating-button" class="tg-button-style">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M20.665 3.717L2.972 10.869C1.986 11.237 1.992 11.835 2.768 12.088L7.152 13.518L17.438 6.76C17.947 6.438 18.411 6.613 18.015 6.985L9.123 15.356L9.088 15.39L8.746 19.16C9.256 19.16 9.471 18.919 9.754 18.632L12.28 16.096L17.29 20.02C18.267 20.592 18.943 20.288 19.176 19.063L22.378 3.398C22.723 1.895 21.728 1.158 20.665 3.717Z" fill="white"/>
     </svg>
@@ -262,126 +298,5 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
     </div>
 </div>
 
-<style>
-    /* Стиль кнопки */
-    .tg-button-style {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #2AABEE; /* Цвет Telegram */
-        color: white;
-        padding: 12px 20px;
-        border-radius: 50px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-family: sans-serif;
-        font-weight: bold;
-        z-index: 9999;
-        transition: transform 0.2s, background-color 0.2s;
-    }
-
-    .tg-button-style:hover {
-        background-color: #229ED9;
-        transform: scale(1.05);
-    }
-
-    /* Стиль всплывающего окна */
-    #tg-widget-popup {
-        position: fixed;
-        bottom: 80px; /* Чуть выше кнопки */
-        right: 20px;
-        width: 350px; /* Ширина окна чата */
-        max-width: 90%;
-        background-color: #1c1c1c; /* Темный фон под темную тему виджета */
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        z-index: 9998;
-        overflow: hidden;
-        border: 1px solid #333;
-        transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
-    }
-
-    /* Классы для скрытия/показа */
-    .tg-popup-hidden {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(20px);
-        pointer-events: none;
-    }
-
-    .tg-popup-visible {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
-
-    /* Заголовок окна с кнопкой закрытия */
-    .tg-popup-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 15px;
-        background-color: #232323;
-        color: #fff;
-        font-family: sans-serif;
-        font-size: 14px;
-        border-bottom: 1px solid #333;
-    }
-
-    #tg-close-btn {
-        background: none;
-        border: none;
-        color: #fff;
-        font-size: 24px;
-        cursor: pointer;
-        line-height: 1;
-    }
-
-    .tg-widget-content {
-        padding: 10px;
-        /* Ограничение высоты, если комментариев много */
-        max-height: 400px; 
-        overflow-y: auto;
-    }
-    
-    /* Дополнительные стили, чтобы виджет comments.app корректно отображался в контейнере */
-    .tg-widget-content iframe {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 380px; /* Минимальная высота, чтобы чат было видно */
-    }
-</style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const tgBtn = document.getElementById('tg-floating-button');
-        const tgPopup = document.getElementById('tg-widget-popup');
-        const closeBtn = document.getElementById('tg-close-btn');
-
-        // Функция открытия/закрытия
-        function toggleTgChat() {
-            if (tgPopup.classList.contains('tg-popup-hidden')) {
-                tgPopup.classList.remove('tg-popup-hidden');
-                tgPopup.classList.add('tg-popup-visible');
-            } else {
-                tgPopup.classList.remove('tg-popup-visible');
-                tgPopup.classList.add('tg-popup-hidden');
-            }
-        }
-
-        // Клик по кнопке "Мини чат"
-        tgBtn.addEventListener('click', toggleTgChat);
-
-        // Клик по крестику
-        closeBtn.addEventListener('click', function() {
-            tgPopup.classList.remove('tg-popup-visible');
-            tgPopup.classList.add('tg-popup-hidden');
-        });
-    });
-</script>
 </body>
 </html>
