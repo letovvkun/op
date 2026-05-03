@@ -1,6 +1,5 @@
-// --- FIREBASE: Импорт и инициализация ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
 
 const firebaseConfig = {
@@ -26,7 +25,18 @@ let watchedEpisodes = new Set();
 const PLAYER_SOURCE_KEY = 'lastPlayerSource'; 
 let currentSortOrder = 'desc'; 
 let timerInterval = null;
-let logPoseTargetDate = null; // Для хранения даты из админки
+let logPoseTargetDate = null;
+
+let plyrInstance = null; 
+
+// --- Названия плееров для выпадающего списка ---
+const playerNames = {
+    'hf': 'Без сжатия | Бета',
+    'dzen': 'Dzen | 4K',
+    'mega': 'Moon Player | 1080p',
+    'kodik': 'Kodik | 720p',
+    'subtitles': 'Dzen | Субтитры'
+};
 
 // --- DOM Элементы ---
 const episodesGrid = document.getElementById('episodesGrid');
@@ -54,7 +64,6 @@ const paginationInfo = document.getElementById('paginationInfo');
 const sortSelect = document.getElementById('sortOrder');
 const scrollTopBtn = document.getElementById('scrollTopBtn');
 
-// --- Функция обновления награды ---
 function updateBounty() {
   const bountyElem = document.getElementById('bountyAmount');
   if (!bountyElem) return;
@@ -63,7 +72,6 @@ function updateBounty() {
   bountyElem.innerText = totalBounty.toLocaleString('en-US');
 }
 
-// --- Функции для работы со статусом просмотра ---
 function loadWatchedStatus() {
   const saved = localStorage.getItem('watchedEpisodes');
   if (saved) {
@@ -76,9 +84,6 @@ function saveWatchedStatus() {
   localStorage.setItem('watchedEpisodes', JSON.stringify([...watchedEpisodes]));
 }
 
-// --- Функция Таймера (Log Pose) ---
-
-// 1. Сначала загружаем дату из базы
 async function initLogPoseTimer() {
   const countElem = document.getElementById('countdown');
   if(!countElem) return;
@@ -88,7 +93,7 @@ async function initLogPoseTimer() {
     const snap = await getDoc(docRef);
     if (snap.exists() && snap.data().targetDate) {
       logPoseTargetDate = new Date(snap.data().targetDate);
-      startCountdown(); // Запускаем таймер
+      startCountdown();
     } else {
       countElem.innerText = "Ждем инфо";
     }
@@ -98,7 +103,6 @@ async function initLogPoseTimer() {
   }
 }
 
-// 2. Сам процесс отсчета
 function startCountdown() {
   const countElem = document.getElementById('countdown');
   if (!countElem || !logPoseTargetDate) return;
@@ -117,7 +121,6 @@ function startCountdown() {
     const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const m = Math.floor((diff / 1000 / 60) % 60);
     
-    // Форматирование для красоты (01 вместо 1)
     const hStr = h < 10 ? '0' + h : h;
     const mStr = m < 10 ? '0' + m : m;
 
@@ -128,29 +131,27 @@ function startCountdown() {
     }
   }
 
-  update(); // Обновить сразу
+  update(); 
   timerInterval = setInterval(update, 60000); 
 }
 
-// --- Функции рендеринга скелетона ---
 function renderSkeletons() {
   if (!episodesGrid) return;
   episodesGrid.innerHTML = '';
+  let skeletonsHTML = '';
   for (let i = 0; i < initialVisibleCount; i++) {
-      const el = document.createElement('div');
-      el.className = 'ep';
-      el.style.pointerEvents = 'none'; 
-      el.innerHTML = `
-        <div class="thumb skeleton-loader" style="border:none;"></div>
-        <div class="meta" style="width:100%">
-          <div class="skeleton-loader" style="height:14px; width:70%; margin-bottom:6px;"></div>
-          <div class="skeleton-loader" style="height:12px; width:40%;"></div>
+      skeletonsHTML += `
+        <div class="ep" style="pointer-events: none;">
+          <div class="thumb skeleton-loader" style="border:none;"></div>
+          <div class="meta" style="width:100%">
+            <div class="skeleton-loader" style="height:14px; width:70%; margin-bottom:6px;"></div>
+            <div class="skeleton-loader" style="height:12px; width:40%;"></div>
+          </div>
         </div>`;
-      episodesGrid.appendChild(el);
   }
+  episodesGrid.innerHTML = skeletonsHTML;
 }
 
-// --- Сортировка ---
 function sortEpisodes() {
   if (currentSortOrder === 'desc') {
       episodes.sort((a, b) => b.id - a.id);
@@ -160,19 +161,29 @@ function sortEpisodes() {
   renderList(search.value);
 }
 
-// --- Функции Загрузки ---
+// 🔥 СЕРВЕРНЫЙ ЛИМИТ СЕРИЙ, ФИЛЬТР ДЛЯ ГЛАВНОЙ СТРАНИЦЫ И КЭШИРОВАНИЕ
 async function loadEpisodes() {
   renderSkeletons();
   
   try {
-    const q = query(episodesCollection, orderBy("id", "desc"));
-    const querySnapshot = await getDocs(q);
-    episodes = querySnapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
+    const cachedEpisodes = sessionStorage.getItem('mainEpisodes');
+    
+    if (cachedEpisodes) {
+        episodes = JSON.parse(cachedEpisodes);
+    } else {
+        const q = query(episodesCollection, orderBy("id", "desc"), limit(150));
+        const querySnapshot = await getDocs(q);
+        
+        episodes = querySnapshot.docs
+            .map(doc => ({ firestoreId: doc.id, ...doc.data() }))
+            .filter(ep => !ep.titleId || ep.titleId === 'one_piece');
+            
+        sessionStorage.setItem('mainEpisodes', JSON.stringify(episodes));
+    }
     
     sortEpisodes();
-    
     renderList();
-    renderModalTable();
+    renderModalTable('');
     
     const savedIndex = localStorage.getItem('lastEpisodeIndex');
     const indexToLoad = (savedIndex !== null && episodes[savedIndex]) ? parseInt(savedIndex, 10) : 0;
@@ -185,7 +196,7 @@ async function loadEpisodes() {
     }
   } catch (error) {
     console.error("Ошибка при загрузке серий из Firestore: ", error);
-    if(episodesGrid) episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--accent-c);">Ошибка загрузки данных.</div>`;
+    if(episodesGrid) episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--error);">Ошибка загрузки данных.</div>`;
   }
 }
 
@@ -200,6 +211,8 @@ function renderList(filter = '') {
   if (episodesToRender.length === 0) {
       episodesGrid.innerHTML = '<div style="text-align:center;padding:2rem;width:100%">Ничего не найдено.</div>';
   } else {
+      const fragment = document.createDocumentFragment();
+      
       episodesToRender.forEach((ep, loopIndex) => {
           const originalIndex = episodes.findIndex(e => e.firestoreId === ep.firestoreId);
           
@@ -245,8 +258,10 @@ function renderList(filter = '') {
 
           el.onclick = clickHandler;
           el.onkeypress = (e) => { if (e.key === 'Enter' || e.key === ' ') clickHandler() };
-          episodesGrid.appendChild(el);
+          fragment.appendChild(el);
       });
+      
+      episodesGrid.appendChild(fragment);
   }
 
   if (loadMoreContainer) {
@@ -277,20 +292,45 @@ function loadEpisode(idx, shouldScroll = false) {
   localStorage.setItem('lastEpisodeIndex', currentIndex);
   
   const ep = episodes[idx];
-  
   document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
 
-  const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'dzen'; 
-  if(playerSourceSelect) playerSourceSelect.value = savedSource; 
-  
-  const selectedPlayer = playerSourceSelect ? playerSourceSelect.value : 'dzen'; 
-  
-  const iframeCode = ep.players[selectedPlayer];
-  if(playerEmbed) {
-      playerEmbed.innerHTML = iframeCode 
-        ? iframeCode 
-        : `<span>Для плеера "${selectedPlayer.toUpperCase()}" видео не найдено.</span>`;
+  if (playerSourceSelect) {
+      playerSourceSelect.innerHTML = '';
+      
+      const availablePlayers = Object.keys(ep.players || {}).filter(k => ep.players[k]);
+
+      if (availablePlayers.length === 0) {
+          playerSourceSelect.innerHTML = `<option value="">Нет плееров</option>`;
+          playerEmbed.innerHTML = `<span style="color:var(--muted);">Для этой серии видео пока недоступно.</span>`;
+          if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
+      } else {
+          availablePlayers.forEach(key => {
+              const name = playerNames[key] || key.toUpperCase();
+              playerSourceSelect.innerHTML += `<option value="${key}">${name}</option>`;
+          });
+
+          const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'hf';
+          const selectedPlayer = availablePlayers.includes(savedSource) ? savedSource : availablePlayers[0];
+          playerSourceSelect.value = selectedPlayer;
+
+          if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
+
+          if (selectedPlayer === 'hf') {
+              const fileName = ep.players.hf;
+              const videoUrl = `https://huggingface.co/datasets/letovvkun/op_archive/resolve/main/${fileName}?download=true`;
+              playerEmbed.innerHTML = `<video id="plyr-hf-player" playsinline controls><source src="${videoUrl}" type="video/mp4" size="1080"></video>`;
+              setTimeout(() => {
+                  plyrInstance = new Plyr('#plyr-hf-player', {
+                      title: ep.title, controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen'],
+                      settings: ['quality', 'speed'], quality: { default: 1080, options: [1080, 720, 480] }
+                  });
+              }, 50);
+          } else {
+              playerEmbed.innerHTML = ep.players[selectedPlayer];
+          }
+      }
   }
+
   if(playerTitle) playerTitle.textContent = ep.title;
   if(playerSub) playerSub.textContent = `${ep.date} • ${ep.quality}`;
   if(metaText) metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
@@ -349,6 +389,9 @@ function renderModalTable(filter = '') {
   if(!allTbody) return;
   allTbody.innerHTML = '';
   const q = filter.trim().toLowerCase();
+  
+  const fragment = document.createDocumentFragment();
+  
   episodes.forEach((ep, idx) => {
     if (q && !(String(ep.id).includes(q) || ep.title.toLowerCase().includes(q))) return;
     const tr = document.createElement('tr');
@@ -358,8 +401,11 @@ function renderModalTable(filter = '') {
       <td style="width:120px">${ep.date}</td>
       <td style="width:80px">${ep.quality}</td>
       <td class="action-cell"><button class="btn" data-idx="${idx}">Смотреть</button></td>`;
-    allTbody.appendChild(tr);
+    fragment.appendChild(tr);
   });
+  
+  allTbody.appendChild(fragment);
+
   allTbody.querySelectorAll('button').forEach(b => {
     b.onclick = () => {
       const idx = Number(b.getAttribute('data-idx'));
@@ -370,13 +416,31 @@ function renderModalTable(filter = '') {
 }
 
 // --- Обработчики событий ---
-
 if(prevBtn) prevBtn.addEventListener('click', () => {
   if (currentIndex < episodes.length - 1) loadEpisode(currentIndex + 1);
 });
 if(nextBtn) nextBtn.addEventListener('click', () => {
   if (currentIndex > 0) loadEpisode(currentIndex - 1);
 });
+
+// --- Логика плавающего меню навигации ---
+const floatingMenuBtn = document.getElementById('floatingMenuBtn');
+const floatingMenu = document.getElementById('floatingMenu');
+
+if (floatingMenuBtn && floatingMenu) {
+    floatingMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        floatingMenu.classList.toggle('active');
+        floatingMenuBtn.classList.toggle('is-open'); 
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!floatingMenu.contains(e.target) && e.target !== floatingMenuBtn) {
+            floatingMenu.classList.remove('active');
+            floatingMenuBtn.classList.remove('is-open'); 
+        }
+    });
+}
 
 if(playerSourceSelect) playerSourceSelect.addEventListener('change', () => {
   const newPlayer = playerSourceSelect.value;
@@ -448,7 +512,9 @@ if(scrollTopBtn) scrollTopBtn.addEventListener('click', () => {
 if(allBtn) allBtn.addEventListener('click', openModal);
 if(closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
 if(modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-if(modalSearch) modalSearch.addEventListener('input', (e) => renderModalTable(e.target.value));
+
+const processModalSearch = debounce((e) => renderModalTable(e.target.value));
+if(modalSearch) modalSearch.addEventListener('input', processModalSearch);
 
 if(shareBtn) shareBtn.addEventListener('click', async () => {
   const shareData = {
@@ -480,7 +546,6 @@ if(themeBtn) themeBtn.addEventListener('click', () => {
   localStorage.setItem('theme', newTheme);
 });
 
-// Кнопки для модального окна Copyright (оставим, если модалка есть в HTML)
 if (copyrightModal && closeCopyrightModalBtn) {
     closeCopyrightModalBtn.addEventListener('click', () => {
         copyrightModal.classList.remove('open');
@@ -504,14 +569,11 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// --- Функция Инициализации Снега ---
 function initSnowEffect() {
   const now = new Date();
   const month = now.getMonth(); 
   const day = now.getDate();
-
   const isSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
-
   if (!isSeason) return; 
 
   const wrapper = document.createElement('div');
@@ -522,31 +584,52 @@ function initSnowEffect() {
   for (let i = 0; i < flakesCount; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
-    
     const size = Math.random() * 3 + 2; 
     const left = Math.random() * 100; 
     const duration = Math.random() * 10 + 10; 
     const delay = Math.random() * -20; 
     const opacity = Math.random() * 0.4 + 0.4; 
-
     flake.style.width = `${size}px`;
     flake.style.height = `${size}px`;
     flake.style.left = `${left}%`;
     flake.style.animationDuration = `${duration}s`;
     flake.style.animationDelay = `${delay}s`;
     flake.style.opacity = opacity;
-
     wrapper.appendChild(flake);
   }
 }
 
-// --- Инициализация при загрузке ---
+// --- ЛОГИКА ВИДЖЕТА TELEGRAM ---
+function initTelegramWidget() {
+    const tgBtn = document.getElementById('tg-floating-button');
+    const tgPopup = document.getElementById('tg-widget-popup');
+    const closeBtn = document.getElementById('tg-close-btn');
+    
+    if(!tgBtn || !tgPopup || !closeBtn) return;
+
+    function toggleTgChat() {
+        if (tgPopup.classList.contains('tg-popup-hidden')) {
+            tgPopup.classList.remove('tg-popup-hidden'); 
+            tgPopup.classList.add('tg-popup-visible');
+        } else {
+            tgPopup.classList.remove('tg-popup-visible'); 
+            tgPopup.classList.add('tg-popup-hidden');
+        }
+    }
+    
+    tgBtn.addEventListener('click', toggleTgChat);
+    closeBtn.addEventListener('click', function() {
+        tgPopup.classList.remove('tg-popup-visible'); 
+        tgPopup.classList.add('tg-popup-hidden');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('theme') || 'dark';
   document.body.setAttribute('data-theme', savedTheme);
   loadWatchedStatus();
   loadEpisodes();
-  // Теперь запускаем таймер с загрузкой из базы
   initLogPoseTimer(); 
   initSnowEffect(); 
+  initTelegramWidget();
 });
