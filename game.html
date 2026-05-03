@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Гранд Лайн Серф | Пасхалка</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&family=Rye&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #050a0f; overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative; width: 100%; height: 100%;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.5); 
+        }
+
+        #gameCanvas {
+            display: block; width: 100%; height: 100%; cursor: crosshair;
+        }
+
+        /* --- ГЛАВНОЕ МЕНЮ --- */
+        #start-menu {
+            position: absolute; inset: 0;
+            background: rgba(5, 10, 15, 0.85); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 200; text-align: center; color: #fff;
+        }
+        #start-menu h1 {
+            font-family: 'Rye', serif; font-size: 56px; color: #ffb86b;
+            margin: 0 0 10px 0; text-shadow: 0 5px 20px rgba(255, 184, 107, 0.4);
+            letter-spacing: 2px;
+        }
+        #start-menu p { font-size: 18px; color: #cbd5e1; margin-bottom: 40px; font-weight: 600; }
+        
+        .diff-row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        
+        .diff-btn {
+            background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #fff; padding: 15px 30px; border-radius: 16px; font-size: 18px; font-weight: 800;
+            cursor: pointer; transition: 0.3s; width: 200px; font-family: 'Inter', sans-serif;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .diff-btn:hover { transform: translateY(-5px); }
+        .diff-btn.easy { border-color: #38bdf8; color: #38bdf8; }
+        .diff-btn.easy:hover { background: #38bdf8; color: #0f172a; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3); }
+        .diff-btn.medium { border-color: #ffb86b; color: #ffb86b; }
+        .diff-btn.medium:hover { background: #ffb86b; color: #1a1a1a; box-shadow: 0 10px 20px rgba(255, 184, 107, 0.3); }
+        .diff-btn.hard { border-color: #ef4444; color: #ef4444; }
+        .diff-btn.hard:hover { background: #ef4444; color: #fff; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); }
+
+        /* --- Интерфейс Игры --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+            display: none; 
+        }
+
+        .score-board {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0, 0, 0, 0.4); padding: 12px 24px;
+            border-radius: 14px; border: 1px solid rgba(255, 184, 107, 0.3);
+            color: #fff; font-size: 16px; font-weight: 800;
+            backdrop-filter: blur(8px); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-transform: uppercase; letter-spacing: 1px; transition: all 0.5s ease;
+        }
+        #score { color: #ffb86b; font-size: 26px; display: block; margin-top: 4px; text-shadow: 0 0 10px rgba(255, 184, 107, 0.5); }
+
+        /* Всплывающие фразы Мугивар */
+        #mugiwara-popup {
+            position: absolute; top: 120px; left: 50%; transform: translateX(-50%) translateY(-20px) scale(0.9);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.95)); 
+            padding: 16px 28px; border-radius: 20px; color: #1a1a1a; font-weight: 800; font-size: 17px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 3px solid #ffb86b;
+            opacity: 0; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; align-items: center; gap: 14px; pointer-events: none;
+        }
+        #mugiwara-popup.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        #mugiwara-avatar { font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
+
+        /* Экран Game Over */
+        #game-over {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: url('https://www.transparenttextures.com/patterns/old-wall.png'), #e8d5a5;
+            padding: 40px 30px; border-radius: 4px; text-align: center;
+            color: #3b2818; display: none; pointer-events: auto;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9), inset 0 0 50px rgba(139, 69, 19, 0.5);
+            border: 2px solid #8b4513; width: 320px;
+        }
+        #game-over::before {
+            content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 25px; background: rgba(0,0,0,0.1); box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 10px);
+        }
+        #game-over h1 { 
+            margin: 0 0 10px 0; font-family: 'Rye', serif; font-size: 48px; 
+            letter-spacing: 2px; color: #3b2818; text-shadow: 2px 2px 0px rgba(255,255,255,0.5); 
+        }
+        #game-over h2 { margin: 0 0 20px 0; font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 5px; color: #5a3d22; }
+        .bounty-amount {
+            font-family: 'Rye', serif; font-size: 38px; margin: 20px 0; color: #d03027;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+        }
+        .bounty-amount span { font-size: 24px; color: #3b2818; }
+        
+        .btn {
+            background: #d03027; color: #fff; border: 2px solid #3b2818; padding: 12px 28px;
+            font-weight: 800; font-size: 16px; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; font-family: 'Inter', sans-serif;
+            text-transform: uppercase; letter-spacing: 1px; box-shadow: 4px 4px 0 #3b2818; width: 100%; margin-bottom: 10px;
+        }
+        .btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #3b2818; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0 #3b2818; }
+        .btn.secondary { background: transparent; color: #8b4513; box-shadow: none; border-color: transparent; padding: 8px; font-size: 14px; }
+        .btn.secondary:hover { transform: none; box-shadow: none; text-decoration: underline; }
+
+        .back-btn {
+            position: absolute; top: 20px; right: 20px; pointer-events: auto;
+            background: rgba(0,0,0,0.4); color: #fff; padding: 10px 20px;
+            border-radius: 12px; text-decoration: none; font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+            transition: 0.2s; z-index: 100;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
+
+        @media (max-width: 600px) {
+            #start-menu h1 { font-size: 40px; }
+            .diff-btn { width: 100%; margin-bottom: 10px; }
+            .diff-row { flex-direction: column; gap: 0; padding: 0 20px; width: 100%; box-sizing: border-box;}
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Главное Меню -->
+    <div id="start-menu">
+        <h1>ГРАНД ЛАЙН</h1>
+        <p>Собирай белли, уворачивайся от Морских Королей.</p>
+        <div class="diff-row">
+            <button class="diff-btn easy" onclick="startGame('easy')">Ист Блу<br><span style="font-size: 12px; opacity: 0.8; font-weight: 400;">Легко</span></button>
+            <button class="diff-btn medium" onclick="startGame('medium')">Гранд Лайн<br><span style="font-size: 12px; opacity: 0.8; font-weight: 400;">Нормально</span></button>
+            <button class="diff-btn hard" onclick="startGame('hard')">Новый Мир<br><span style="font-size: 12px; opacity: 0.8; font-weight: 400;">Хардкор</span></button>
+        </div>
+        <a href="/" style="color: #cbd5e1; margin-top: 30px; font-weight: 600; text-decoration: none;">&larr; Вернуться на сайт</a>
+    </div>
+
+    <!-- UI Игры -->
+    <div id="ui-layer">
+        <div class="score-board" id="scoreBoard">
+            Награда
+            <span id="score">0</span>
+        </div>
+
+        <a href="/" class="back-btn">Выйти</a>
+
+        <div id="mugiwara-popup">
+            <div id="mugiwara-avatar">🏴‍☠️</div>
+            <div id="mugiwara-text">Тест!</div>
+        </div>
+
+        <div id="game-over">
+            <h1>WANTED</h1>
+            <h2>DEAD OR ALIVE</h2>
+            <div style="width: 100%; height: 120px; background: #2a1e12; border: 4px solid #3b2818; margin: 10px 0; position: relative; overflow: hidden;">
+                <div style="position:absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 100px;">💀</div>
+            </div>
+            <div class="bounty-amount"><span style="font-family: 'Inter', sans-serif;">B</span> <span id="final-score" style="color:#d03027; font-family: 'Rye', serif;">0</span> <span style="font-family: 'Inter', sans-serif;">-</span></div>
+            <button class="btn" onclick="resetGame()">В море!</button>
+            <button class="btn secondary" onclick="goToMenu()">Сменить сложность</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const finalScoreEl = document.getElementById('final-score');
+    const gameOverScreen = document.getElementById('game-over');
+    const popup = document.getElementById('mugiwara-popup');
+    const popupText = document.getElementById('mugiwara-text');
+    const popupAvatar = document.getElementById('mugiwara-avatar');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const startMenu = document.getElementById('start-menu');
+    const uiLayer = document.getElementById('ui-layer');
+
+    // Настройки движка
+    let width, height;
+    let isGameRunning = false;
+    let isGameOver = false;
+    let frames = 0;
+    
+    // Параметры сложности
+    let baseSpeed = 2.0;
+    let gameSpeed = baseSpeed;
+    let maxSpeed = 10;
+    let acceleration = 0.0006;
+    
+    // Игровые данные
+    let score = 0;
+    let nextMilestone = 1000;
+    let oceanOffset = 0;
+    let timeOfDay = 0;
+
+    function resize() {
+        width = window.innerWidth; height = window.innerHeight;
+        canvas.width = width; canvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // 🔥 ДОБАВЛЕНЫ ВЕКТОРЫ СИЛЫ (pushVx, pushVy) ДЛЯ ОТТАЛКИВАНИЯ 🔥
+    const player = { 
+        x: width / 2, y: height - 150, size: 24, 
+        targetX: width / 2, targetY: height - 150, 
+        tilt: 0, 
+        pushVx: 0, pushVy: 0 
+    };
+
+    let obstacles = []; let collectibles = []; let particles = []; let birds = []; let stars = [];
+
+    // Фразы Мугивар
+    const quotes = [
+        { emoji: '🍖', text: 'Шишиши! Мясо!! То есть... Белли!!' },
+        { emoji: '⚔️', text: 'Отлично... Хватит на хорошее саке.' },
+        { emoji: '🍊', text: 'МОИ ДЕНЕЖКИ!!! СОБИРАЙ ЕЩЁ! 😍' },
+        { emoji: '🍳', text: 'Всё ради Нами-сан! 🌪️' },
+        { emoji: '🤥', text: 'Ха! Я, Великий Усопп, собрал бы больше!' },
+        { emoji: '🦌', text: 'Докторская сумка будет полной!' },
+        { emoji: '💀', text: 'Йо-хо-хо! Глаза разбегаются... хотя их у меня нет!' },
+        { emoji: '🤖', text: 'СУУУПЕРРРРР куш, бро!' }
+    ];
+
+    // Управление
+    const keys = {};
+    window.addEventListener('keydown', e => keys[e.key] = true);
+    window.addEventListener('keyup', e => keys[e.key] = false);
+
+    canvas.addEventListener('touchmove', e => { 
+        if(!isGameRunning || isGameOver) return;
+        e.preventDefault(); 
+        player.targetX = e.touches[0].clientX; 
+        player.targetY = e.touches[0].clientY - 60; // Палец чуть ниже корабля
+    }, { passive: false });
+    
+    canvas.addEventListener('mousemove', e => { 
+        if(isGameRunning && !isGameOver) {
+            player.targetX = e.clientX; 
+            player.targetY = e.clientY;
+        }
+    });
+
+    // --- УТИЛИТЫ ---
+    function lerpColor(c1, c2, t) {
+        return [
+            Math.round(c1[0] + (c2[0] - c1[0]) * t),
+            Math.round(c1[1] + (c2[1] - c1[1]) * t),
+            Math.round(c1[2] + (c2[2] - c1[2]) * t)
+        ];
+    }
+
+    // --- СТАРТ ИГРЫ И СЛОЖНОСТЬ ---
+    function startGame(diff) {
+        if (diff === 'easy') { baseSpeed = 1.5; maxSpeed = 8; acceleration = 0.0003; }
+        else if (diff === 'medium') { baseSpeed = 2.5; maxSpeed = 13; acceleration = 0.0007; }
+        else if (diff === 'hard') { baseSpeed = 3.5; maxSpeed = 18; acceleration = 0.0015; }
+
+        startMenu.style.display = 'none';
+        uiLayer.style.display = 'block';
+        resetGame();
+    }
+
+    function goToMenu() {
+        isGameRunning = false;
+        gameOverScreen.style.display = 'none';
+        uiLayer.style.display = 'none';
+        startMenu.style.display = 'flex';
+        // Возвращаем корабль в центр для фона меню
+        player.x = width / 2;
+        player.y = height - 150;
+        player.targetX = width / 2;
+        player.targetY = height - 150;
+        player.tilt = 0;
+        player.pushVx = 0;
+        player.pushVy = 0;
+    }
+
+    // --- РЕНДЕР ФИГУР ---
+    function drawShip(x, y, tilt) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+
+        // Волны от носа корабля
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.moveTo(0, -player.size * 2);
+        ctx.quadraticCurveTo(-player.size * 1.5, -player.size, -player.size * 0.5, player.size);
+        ctx.quadraticCurveTo(0, player.size * 1.5, player.size * 0.5, player.size);
+        ctx.quadraticCurveTo(player.size * 1.5, -player.size, 0, -player.size * 2);
+        ctx.fill();
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = 15; ctx.shadowOffsetY = 10;
+
+        // Палуба
+        ctx.fillStyle = '#8B5A2B'; ctx.beginPath(); ctx.ellipse(0, 0, player.size, player.size * 2.2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#5C3A21'; ctx.lineWidth = 3; ctx.stroke();
+
+        // Парус
+        ctx.shadowColor = 'transparent'; ctx.fillStyle = '#F8F9FA';
+        ctx.beginPath(); ctx.moveTo(0, -player.size * 1.2); ctx.quadraticCurveTo(player.size * 1.4, player.size * 0.8, 0, player.size * 1.6); ctx.quadraticCurveTo(-player.size * 1.4, player.size * 0.8, 0, -player.size * 1.2); ctx.fill();
+        
+        // Веселый Роджер на парусе
+        ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(0, player.size*0.2, player.size*0.3, 0, Math.PI*2); ctx.fill(); // Череп
+        ctx.lineWidth = 2; ctx.strokeStyle = '#111';
+        ctx.beginPath(); ctx.moveTo(-player.size*0.4, -player.size*0.1); ctx.lineTo(player.size*0.4, player.size*0.5); ctx.stroke(); // Кости
+        ctx.beginPath(); ctx.moveTo(player.size*0.4, -player.size*0.1); ctx.lineTo(-player.size*0.4, player.size*0.5); ctx.stroke();
+
+        // Голова Барашка
+        ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(0, -player.size * 2.2, player.size * 0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#D2B48C'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(-player.size*0.4, -player.size * 2.2, player.size*0.3, 0, Math.PI, true); ctx.stroke();
+        ctx.beginPath(); ctx.arc(player.size*0.4, -player.size * 2.2, player.size*0.3, 0, Math.PI, true); ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawWhirlpool(x, y, size, rotation) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(rotation);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        for(let i=0; i<Math.PI*4; i+=0.1) { let r = (size * i) / (Math.PI*4); ctx.lineTo(r * Math.cos(i), r * Math.sin(i)); }
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0, 100, 255, 0.2)'; ctx.beginPath(); ctx.arc(0,0,size,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+    }
+
+    function drawSeaKing(x, y, size) {
+        ctx.save(); ctx.translate(x, y);
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, size * 1.2, 0, Math.PI * 2); ctx.stroke();
+        
+        ctx.fillStyle = '#0a2e22'; 
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)'; ctx.shadowBlur = 20;
+        
+        ctx.beginPath();
+        ctx.moveTo(-size*0.6, size*0.8);
+        ctx.quadraticCurveTo(-size*0.8, -size*0.5, 0, -size*1.2); 
+        ctx.quadraticCurveTo(size*0.8, -size*0.5, size*0.6, size*0.8); 
+        ctx.fill();
+
+        ctx.fillStyle = '#174a38';
+        ctx.beginPath(); ctx.moveTo(0, -size*1.2); ctx.lineTo(-size*0.2, -size*1.5); ctx.lineTo(0, -size*0.9); ctx.fill();
+
+        ctx.shadowColor = '#ff2a2a'; ctx.shadowBlur = 15; ctx.fillStyle = '#ff2a2a';
+        ctx.beginPath(); ctx.ellipse(-size*0.25, -size*0.5, size*0.1, size*0.15, Math.PI/6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(size*0.25, -size*0.5, size*0.1, size*0.15, -Math.PI/6, 0, Math.PI*2); ctx.fill();
+
+        ctx.shadowColor = 'transparent'; ctx.fillStyle = '#e2e8f0';
+        ctx.beginPath(); ctx.moveTo(-size*0.3, -size*0.1); ctx.lineTo(-size*0.15, size*0.3); ctx.lineTo(0, -size*0.1); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(size*0.3, -size*0.1); ctx.lineTo(size*0.15, size*0.3); ctx.lineTo(0, -size*0.1); ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawBarrel(x, y, size) {
+        ctx.save(); ctx.translate(x, y);
+        const floatY = Math.sin(frames * 0.05 + x) * 3; 
+        ctx.translate(0, floatY);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'; ctx.shadowBlur = 10;
+        ctx.fillStyle = '#A0522D'; ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.strokeStyle = '#696969'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 0, size * 0.7, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCoin(x, y, size) {
+        ctx.save(); ctx.translate(x, y);
+        const floatY = Math.sin(frames * 0.08 + x) * 4;
+        ctx.translate(0, floatY);
+        const pulse = 10 + Math.sin(frames * 0.1) * 5;
+        ctx.shadowColor = '#FFD700'; ctx.shadowBlur = pulse;
+        ctx.fillStyle = '#FFD700'; ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.fillStyle = '#DAA520'; ctx.beginPath(); ctx.arc(0, 0, size * 0.75, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#FFF'; ctx.font = `900 ${size}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('B', 0, 1);
+        ctx.restore();
+    }
+
+    function drawChest(x, y, size) {
+        ctx.save(); ctx.translate(x, y);
+        const floatY = Math.sin(frames * 0.06 + x) * 3;
+        ctx.translate(0, floatY);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = 15;
+        ctx.fillStyle = '#5C3A21'; ctx.fillRect(-size, -size*0.8, size*2, size*1.6);
+        ctx.shadowColor = 'transparent'; ctx.fillStyle = '#FFD700';
+        ctx.fillRect(-size + 4, -size*0.8, 6, size*1.6); ctx.fillRect(size - 10, -size*0.8, 6, size*1.6); 
+        ctx.fillRect(-8, -4, 16, 12); 
+        ctx.restore();
+    }
+
+    function drawBird(b) {
+        ctx.save(); ctx.translate(b.x, b.y);
+        ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.arc(0, 50, 10, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#FFF'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        const wingY = Math.sin(frames * 0.2 + b.x) * 10;
+        ctx.beginPath(); ctx.moveTo(-15, wingY); ctx.quadraticCurveTo(-7, -5, 0, 0); ctx.quadraticCurveTo(7, -5, 15, wingY); ctx.stroke();
+        ctx.restore();
+    }
+
+    // --- ЛОГИКА ИГРЫ ---
+    function spawnObstacle() {
+        const rand = Math.random();
+        let type = 'barrel', size = 22, hitbox = 20;
+        if (rand > 0.85) { type = 'whirlpool'; size = 60; hitbox = 45; } 
+        else if (rand > 0.70) { type = 'seaking'; size = 45; hitbox = 35; }
+        
+        obstacles.push({ x: Math.random() * (width - size*2) + size, y: -100, size: size, type: type, hitbox: hitbox, rot: 0 });
+    }
+
+    function spawnCollectible() {
+        const isChest = Math.random() > 0.9;
+        collectibles.push({ x: Math.random() * (width - 40) + 20, y: -100, size: isChest ? 22 : 14, type: isChest ? 'chest' : 'coin', value: isChest ? 250 : 25, hitbox: isChest ? 25 : 20 });
+    }
+
+    function spawnBird() {
+        if(Math.random() > 0.99) birds.push({ x: Math.random() * width, y: -50, speed: Math.random() * 2 + 1 });
+    }
+
+    function createSplash(x, y, color = 'rgba(255, 255, 255, 0.6)') {
+        for(let i=0; i<4; i++){
+            particles.push({ x: x + (Math.random() - 0.5) * 20, y: y, vx: (Math.random() - 0.5) * 3, vy: Math.random() * 3 + 1, life: 1, size: Math.random() * 5 + 3, color: color });
+        }
+    }
+
+    function showPopup() {
+        const quote = quotes[Math.floor(Math.random() * quotes.length)];
+        popupAvatar.innerText = quote.emoji; popupText.innerText = quote.text;
+        popup.classList.add('show');
+        setTimeout(() => popup.classList.remove('show'), 4500); 
+    }
+
+    function update() {
+        if (!isGameRunning || isGameOver) return;
+
+        if (gameSpeed < maxSpeed) gameSpeed += acceleration;
+
+        timeOfDay = (score % 4000) / 4000;
+        if (timeOfDay > 0.4 && timeOfDay < 0.8 && Math.random() > 0.9) {
+            stars.push({x: Math.random() * width, y: Math.random() * height, life: Math.random()}); 
+        }
+
+        // Управление X и Y (клавиатура)
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) player.targetX -= 12;
+        if (keys['ArrowRight'] || keys['d'] || keys['D']) player.targetX += 12;
+        if (keys['ArrowUp'] || keys['w'] || keys['W']) player.targetY -= 12;
+        if (keys['ArrowDown'] || keys['s'] || keys['S']) player.targetY += 12;
+        
+        // Ограничение зоны плавания: только нижняя треть экрана
+        const minY = height * 0.65; 
+        const maxY = height - player.size * 2; 
+        
+        player.targetX = Math.max(player.size, Math.min(width - player.size, player.targetX));
+        player.targetY = Math.max(minY, Math.min(maxY, player.targetY)); 
+        
+        // Базовое движение к цели (управление игрока)
+        const dx = player.targetX - player.x;
+        const dy = player.targetY - player.y;
+        
+        player.x += dx * 0.1; 
+        player.y += dy * 0.1; 
+        
+        // 🔥 ПРИМЕНЕНИЕ ВНЕШНИХ СИЛ (Водоворот) 🔥
+        player.x += player.pushVx;
+        player.y += player.pushVy;
+
+        // Затухание физической силы (Инерция)
+        player.pushVx *= 0.85;
+        player.pushVy *= 0.85;
+        
+        // Крен складывается из поворота руля и физического удара в бок
+        player.tilt = (dx * 0.006) + (player.pushVx * 0.02); 
+
+        // Жесткий фикс позиции корабля, чтобы его не выкинуло за экран
+        player.x = Math.max(player.size, Math.min(width - player.size, player.x));
+        player.y = Math.max(minY - 30, Math.min(maxY + 30, player.y)); 
+
+        if(frames % 2 === 0) createSplash(player.x, player.y + player.size * 1.8);
+        oceanOffset += gameSpeed * 0.5;
+
+        if (frames % 10 === 0) { score += Math.floor(gameSpeed); scoreEl.innerText = score; }
+        if (score >= nextMilestone) { showPopup(); nextMilestone += 1500; }
+
+        const obstacleRate = Math.max(30, Math.floor(100 - gameSpeed * 3)); 
+        if (frames % obstacleRate === 0) spawnObstacle();
+        if (frames % 40 === 0) spawnCollectible();
+        spawnBird();
+
+        // Обновление объектов и коллизии
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.y += gameSpeed;
+            
+            // 🔥 Новая физика Водоворота (Резкое отталкивание в бок) 🔥
+            if (obs.type === 'whirlpool') { 
+                obs.rot += 0.05; 
+                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
+                const effectRadius = obs.size * 2.5; 
+                
+                if (dist < effectRadius && dist > 0) {
+                    // Вычисляем силу толчка (чем ближе к центру, тем сильнее бьет)
+                    const force = Math.pow((effectRadius - dist) / effectRadius, 2);
+                    
+                    // Вычисляем угол от центра водоворота до корабля
+                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
+                    
+                    // Тангенс угла (чтобы швырнуть вбок по кругу)
+                    const tangent = angle + (Math.PI / 2); 
+                    
+                    // Накапливаем физическую скорость (Резкий удар вбок + чуть-чуть отталкивает наружу)
+                    player.pushVx += Math.cos(tangent) * force * 30 + Math.cos(angle) * force * 10;
+                    player.pushVy += Math.sin(tangent) * force * 30 + Math.sin(angle) * force * 10;
+                    
+                    if (frames % 3 === 0) createSplash(player.x, player.y, 'rgba(0, 150, 255, 0.4)');
+                }
+            } else {
+                // Обычная коллизия для бочек и монстров
+                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
+                if (dist < (player.size * 0.8 + obs.hitbox)) gameOver();
+            }
+            
+            if (obs.y > height + 100) obstacles.splice(i, 1);
+        }
+
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            let col = collectibles[i];
+            col.y += gameSpeed;
+            const dist = Math.hypot(player.x - col.x, player.y - col.y);
+            if (dist < (player.size + col.hitbox)) {
+                score += col.value; scoreEl.innerText = score;
+                for(let j=0; j<5; j++) createSplash(col.x, col.y, '#FFD700');
+                collectibles.splice(i, 1); continue;
+            }
+            if (col.y > height + 100) collectibles.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy + gameSpeed * 0.3; p.size *= 0.95; p.life -= 0.03;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = birds.length - 1; i >= 0; i--) {
+            let b = birds[i];
+            b.y += gameSpeed * 0.5; b.x += b.speed;
+            if (b.y > height || b.x > width) birds.splice(i, 1);
+        }
+
+        frames++;
+    }
+
+    function draw() {
+        let cTop, cBot;
+        if (timeOfDay < 0.25) { 
+            cTop = [10, 66, 115]; cBot = [5, 34, 61];
+            scoreBoard.style.background = 'rgba(0,0,0,0.4)';
+        } else if (timeOfDay < 0.4) { 
+            let t = (timeOfDay - 0.25) / 0.15;
+            cTop = lerpColor([10, 66, 115], [255, 120, 80], t);
+            cBot = lerpColor([5, 34, 61], [100, 20, 50], t);
+        } else if (timeOfDay < 0.75) { 
+            let t = (timeOfDay - 0.4) / 0.35;
+            cTop = lerpColor([255, 120, 80], [5, 15, 30], Math.min(1, t*2));
+            cBot = lerpColor([100, 20, 50], [2, 5, 15], Math.min(1, t*2));
+            scoreBoard.style.background = 'rgba(255,255,255,0.1)';
+        } else { 
+            let t = (timeOfDay - 0.75) / 0.25;
+            cTop = lerpColor([5, 15, 30], [10, 66, 115], t);
+            cBot = lerpColor([2, 5, 15], [5, 34, 61], t);
+        }
+
+        const grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, `rgb(${cTop[0]},${cTop[1]},${cTop[2]})`);
+        grad.addColorStop(1, `rgb(${cBot[0]},${cBot[1]},${cBot[2]})`);
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height);
+
+        if (timeOfDay > 0.3 && timeOfDay < 0.8) {
+            ctx.fillStyle = '#FFF';
+            stars.forEach(s => {
+                ctx.globalAlpha = Math.abs(Math.sin(frames * 0.05 + s.life * 10));
+                ctx.beginPath(); ctx.arc(s.x, s.y, 1.5, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)'; ctx.lineWidth = 2;
+        const waveSpacing = 90;
+        for (let y = (oceanOffset % waveSpacing) - waveSpacing; y < height; y += waveSpacing) {
+            ctx.beginPath(); ctx.moveTo(0, y);
+            for (let x = 0; x <= width; x += 50) { ctx.lineTo(x, y + Math.sin(x * 0.02 + oceanOffset * 0.03) * 20); }
+            ctx.stroke();
+        }
+
+        particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1;
+        collectibles.forEach(col => { if (col.type === 'coin') drawCoin(col.x, col.y, col.size); else drawChest(col.x, col.y, col.size); });
+        obstacles.forEach(obs => { 
+            if (obs.type === 'barrel') drawBarrel(obs.x, obs.y, obs.size); 
+            else if (obs.type === 'whirlpool') drawWhirlpool(obs.x, obs.y, obs.size, obs.rot);
+            else drawSeaKing(obs.x, obs.y, obs.size); 
+        });
+        birds.forEach(b => drawBird(b));
+        
+        drawShip(player.x, player.y, player.tilt);
+
+        // 🔥 ВАЖНО: Цикл отрисовки крутится всегда, чтобы море продолжало двигаться! 🔥
+        if (isGameRunning) update(); 
+        requestAnimationFrame(draw); 
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        isGameRunning = false; // Останавливаем логику, но оставляем отрисовку моря!
+        gameOverScreen.style.display = 'block';
+        finalScoreEl.innerText = score.toLocaleString('ru-RU');
+        canvas.style.transform = 'translate(15px, 15px)';
+        setTimeout(() => canvas.style.transform = 'translate(-15px, -15px)', 50);
+        setTimeout(() => canvas.style.transform = 'translate(10px, -10px)', 100);
+        setTimeout(() => canvas.style.transform = 'translate(0, 0)', 150);
+    }
+
+    function resetGame() {
+        score = 0; gameSpeed = baseSpeed; frames = 0; nextMilestone = 1000; oceanOffset = 0;
+        obstacles = []; collectibles = []; particles = []; birds = []; stars = [];
+        player.x = width / 2; player.y = height - 150; player.targetX = width / 2; player.targetY = height - 150; player.tilt = 0;
+        player.pushVx = 0; player.pushVy = 0;
+        scoreEl.innerText = '0'; gameOverScreen.style.display = 'none'; popup.classList.remove('show');
+        isGameOver = false; isGameRunning = true;
+    }
+
+    draw(); // Запуск фоновой анимации для меню
+</script>
+</body>
+</html>

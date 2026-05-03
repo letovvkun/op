@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Каталог тайтлов | Макс Летов & ShiYori</title>
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+  /* --- РАСШИРЯЕМ КОНТЕЙНЕР СПЕЦИАЛЬНО ДЛЯ КАТАЛОГА --- */
+  .wrap {
+      max-width: 1450px !important; 
+  }
+
+  /* Базовый стиль для иконок в подвале для плавного перехода */
+  .site-footer .js-themable-icon { transition: filter 0.3s ease; }
+  body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
+
+  /* --- Специфичные стили для Каталога --- */
+  .catalog-layout {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+      margin-top: 22px;
+      position: relative;
+      z-index: 6;
+  }
+
+  .catalog-main {
+      flex: 1;
+      min-width: 0;
+  }
+
+  .catalog-sidebar {
+      width: 300px;
+      position: sticky;
+      top: 100px; 
+      flex-shrink: 0;
+      z-index: 999;
+  }
+
+  /* Сетка карточек: ЖЕСТКО 4 в ряд */
+  .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      align-items: start;
+  }
+
+  .catalog-card {
+      text-decoration: none;
+      background: var(--component-bg);
+      border: 1px solid var(--component-border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      display: flex;
+      flex-direction: column;
+  }
+
+  .catalog-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--ep-hover-shadow);
+      border-color: var(--accent-c);
+  }
+
+  .catalog-card-img {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      overflow: hidden;
+      background: #0b1720;
+  }
+  [data-theme="light"] .catalog-card-img { background: #e2e8f0; }
+
+  .catalog-card-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+  }
+
+  .catalog-card:hover .catalog-card-img img {
+      transform: scale(1.05);
+  }
+
+  .catalog-card-info {
+      padding: 16px;
+      text-align: center;
+  }
+
+  .catalog-card-info h3 {
+      margin: 0;
+      font-size: 16px; 
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+  }
+
+  /* Блок фильтров */
+  .filter-box {
+      background: rgba(30, 30, 30, 0.85); 
+      border: 1px solid rgba(255, 255, 255, 0.15); 
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); 
+      backdrop-filter: blur(16px) saturate(1.2);
+      color: var(--text);
+  }
+  [data-theme="light"] .filter-box {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      color: #1a1a1a;
+  }
+
+  .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 24px;
+      transition: border-color 0.2s;
+  }
+  [data-theme="light"] .search-input { 
+      background: rgba(0,0,0,0.05); 
+      border-color: rgba(0,0,0,0.1);
+      color: #1a1a1a;
+  }
+  .search-input:focus { border-color: var(--accent-c); }
+  
+  select.search-input {
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23eaeaea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+  }
+  [data-theme="light"] select.search-input {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  }
+  select.search-input option {
+      background: var(--bg-1);
+      color: var(--text);
+  }
+
+  .filter-section h4 {
+      margin: 0 0 12px 0;
+      font-size: 15px;
+      border-bottom: 1px dashed rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+  }
+  [data-theme="light"] .filter-section h4 {
+      border-bottom-color: rgba(0,0,0,0.1);
+  }
+
+  /* --- СТИЛИ ДЛЯ ВЫПАДАЮЩЕГО АККОРДЕОНА ЖАНРОВ --- */
+  details.filter-accordion {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 24px;
+      transition: background 0.2s;
+      overflow: hidden;
+  }
+  [data-theme="light"] details.filter-accordion {
+      background: rgba(0,0,0,0.03);
+      border-color: rgba(0,0,0,0.05);
+  }
+  details.filter-accordion[open] {
+      background: rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="light"] details.filter-accordion[open] {
+      background: rgba(0,0,0,0.06);
+  }
+  details.filter-accordion summary {
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      list-style: none;
+      position: relative;
+      color: var(--text);
+      user-select: none;
+  }
+  details.filter-accordion summary::-webkit-details-marker {
+      display: none;
+  }
+  details.filter-accordion summary::after {
+      content: '+';
+      position: absolute;
+      right: 16px;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 400;
+  }
+  details.filter-accordion[open] summary::after {
+      content: '−';
+      color: var(--accent-c);
+  }
+  .accordion-content {
+      padding: 0 16px 16px 16px;
+      max-height: 250px;
+      overflow-y: auto;
+  }
+  .accordion-content::-webkit-scrollbar { width: 4px; }
+  .accordion-content::-webkit-scrollbar-track { background: transparent; }
+  .accordion-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  [data-theme="light"] .accordion-content::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); }
+
+  /* Красивые чекбоксы */
+  .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 10px;
+      transition: color 0.2s;
+      user-select: none;
+  }
+  .checkbox-container:hover { color: var(--text); }
+  [data-theme="light"] .checkbox-container:hover { color: #1a1a1a; }
+  .checkbox-container input { display: none; }
+  
+  .checkmark {
+      width: 20px;
+      height: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      transition: 0.2s;
+      flex-shrink: 0;
+  }
+  [data-theme="light"] .checkmark { background: rgba(0,0,0,0.05); border-color: #cbd5e1; }
+
+  .checkbox-container input:checked ~ .checkmark {
+      background: var(--accent-c);
+      border-color: var(--accent-c);
+  }
+  .checkbox-container input:checked ~ .checkmark::after {
+      content: '✔';
+      color: #1a1a1a;
+      font-size: 13px;
+      font-weight: 800;
+  }
+
+  .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 15px;
+      grid-column: 1 / -1;
+  }
+
+  /* --- МОБИЛЬНЫЙ ФИЛЬТР --- */
+  .mobile-filter-overlay {
+      display: none;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 9998;
+  }
+  .mobile-filter-overlay.open { display: block; }
+  
+  .close-filter-btn { display: none; justify-content: center; margin-bottom: 20px; width: 100%; }
+  #mobileFilterBtn { display: none; }
+
+  /* АДАПТИВНОСТЬ */
+  @media (max-width: 1250px) {
+      .catalog-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 980px) {
+      #mobileFilterBtn { display: flex; align-items: center; gap: 8px; }
+      
+      /* Сайдбар выезжает справа */
+      .catalog-sidebar {
+          position: fixed;
+          top: 0; 
+          right: -100%; 
+          width: 320px; 
+          max-width: 85vw; 
+          height: 100vh;
+          height: 100dvh; 
+          z-index: 9999; 
+          transition: right 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+          margin: 0;
+      }
+      .catalog-sidebar.open { 
+          right: 0; 
+      }
+      
+      .filter-box {
+          height: 100%;
+          max-height: 100%;
+          border-radius: 24px 0 0 24px; 
+          border: none;
+          border-left: 1px solid rgba(255,255,255,0.1);
+          overflow-y: auto;
+          padding: 30px 20px 20px 20px;
+      }
+      [data-theme="light"] .filter-box {
+          border-left-color: rgba(0,0,0,0.1);
+      }
+      
+      .close-filter-btn { display: flex; }
+  }
+  @media (max-width: 650px) {
+      .catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .catalog-card-info { padding: 12px; }
+      .catalog-card-info h3 { font-size: 13px; }
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+  <div class="floating-nav">
+      <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+      </button>
+      <div id="floatingMenu" class="floating-menu">
+          <a href="index.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              Главная (Ван-Пис)
+          </a>
+          <a href="catalog.html" class="floating-menu-item" style="color: var(--accent-c);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Каталог тайтлов
+          </a>
+          <a href="tracker.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a8 8 0 0 1 16 0v2"></path><path d="M4 11h4v4H4z"></path><path d="M16 11h4v4h-4z"></path></svg>
+              Торренты
+          </a>
+          <a href="info.html" class="floating-menu-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              О нас / FAQ
+          </a>
+          <a href="game.html" class="floating-menu-item" style="color: var(--accent-c);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M6 12h4"></path><path d="M8 10v4"></path><path d="M15 13h.01"></path><path d="M18 11h.01"></path></svg>
+              Мини-игра
+          </a>
+      </div>
+  </div>
+
+  <div class="site-banner" role="banner"></div>
+
+  <nav class="social-links-bar">
+    <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="btn glass-effect">Telegram</a>
+    <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="btn glass-effect">TikTok</a>
+    <a href="https://taplink.cc/letovshiyori" target="_blank" rel="noopener noreferrer" class="btn special-btn">Донатик <3</a>
+  </nav>
+
+  <div id="filterOverlay" class="mobile-filter-overlay"></div>
+
+  <div class="wrap" role="main">
+    <div class="hero-glow" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand">
+        <div class="logo-badge">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип">
+        </div>
+        <div class="title">
+          <h1 style="font-size: 22px;">Каталог тайтлов</h1>
+          <p style="color: var(--muted); margin-top: 4px;">Вся библиотека озвучек от Макс Летов & ShiYori</p>
+        </div>
+      </div>
+      <div class="controls-top">
+        <button id="mobileFilterBtn" class="btn special-btn">
+            Фильтры
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        </button>
+
+        <button id="themeBtn" class="btn ghost" title="Переключить тему">
+          <span class="icon-moon"></span>
+          <span class="icon-sun"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="catalog-layout">
+        <main class="catalog-main">
+            <div class="catalog-grid" id="catalogGrid">
+                <div class="empty-state">Загрузка каталога...</div>
+            </div>
+        </main>
+
+        <aside class="catalog-sidebar" id="catalogSidebar">
+            <div class="filter-box">
+                <button id="closeFilterBtn" class="btn ghost close-filter-btn">
+                    <span style="font-size: 16px; margin-right: 6px;">✕</span> Закрыть фильтры
+                </button>
+
+                <input type="text" id="searchInput" class="search-input" placeholder="Поиск по названию...">
+
+                <!-- Сортировка -->
+                <div class="filter-section" style="margin-bottom: 24px;">
+                    <h4>Сортировка</h4>
+                    <select id="catalogSortOrder" class="search-input" style="margin-bottom: 0;">
+                        <option value="newest">Сначала новые</option>
+                        <option value="oldest">Сначала старые</option>
+                        <option value="name-asc">По алфавиту (А-Я)</option>
+                        <option value="name-desc">По алфавиту (Я-А)</option>
+                    </select>
+                </div>
+
+                <!-- Жанры (Аккордеон) -->
+                <details class="filter-accordion" open>
+                    <summary>Жанры</summary>
+                    <div class="accordion-content" id="genresContainer">
+                        <div style="color: var(--muted); font-size: 13px; margin-top: 10px;">Загрузка...</div>
+                    </div>
+                </details>
+
+                <div class="filter-section">
+                    <h4>Кто озвучивал</h4>
+                    <div id="voiceContainer">
+                        <div style="color: var(--muted); font-size: 13px;">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-socials">
+        <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon">
+        </a>
+        <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon">
+        </a>
+        <a href="https://www.youtube.com/@max.letovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="YouTube">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon">
+        </a>
+        <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon">
+        </a>
+      </div>
+      <p class="footer-text">
+        Весь материал на сайте представлен исключительно для домашнего ознакомительного просмотра.
+        <br>
+        В случаях нарушения авторских прав или сотрудничества — обращайтесь на почту: <a href="mailto:support@letovshiyori.org">support@letovshiyori.org</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="js/catalog.js"></script>
+</body>
+</html>
