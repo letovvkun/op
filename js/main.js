@@ -322,7 +322,8 @@ function loadEpisode(idx, shouldScroll = false) {
               setTimeout(() => {
                   plyrInstance = new Plyr('#plyr-hf-player', {
                       title: ep.title, controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen'],
-                      settings: ['quality', 'speed'], quality: { default: 1080, options: [1080, 720, 480] }
+                      settings: ['quality', 'speed'], quality: { default: 1080, options: [1080, 720, 480] },
+                      fullscreen: { iosNative: true }
                   });
               }, 50);
           } else {
