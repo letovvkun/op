@@ -600,28 +600,28 @@ function initSnowEffect() {
   }
 }
 
-// --- ЛОГИКА ВИДЖЕТА TELEGRAM ---
-function initTelegramWidget() {
-    const tgBtn = document.getElementById('tg-floating-button');
-    const tgPopup = document.getElementById('tg-widget-popup');
-    const closeBtn = document.getElementById('tg-close-btn');
+// --- ЛОГИКА ВИДЖЕТА ЧАТА (GISCUS) ---
+function initChatWidget() {
+    const chatBtn = document.getElementById('chat-floating-button');
+    const chatPopup = document.getElementById('chat-widget-popup');
+    const closeBtn = document.getElementById('chat-close-btn');
     
-    if(!tgBtn || !tgPopup || !closeBtn) return;
+    if(!chatBtn || !chatPopup || !closeBtn) return;
 
-    function toggleTgChat() {
-        if (tgPopup.classList.contains('tg-popup-hidden')) {
-            tgPopup.classList.remove('tg-popup-hidden'); 
-            tgPopup.classList.add('tg-popup-visible');
+    function toggleChat() {
+        if (chatPopup.classList.contains('chat-popup-hidden')) {
+            chatPopup.classList.remove('chat-popup-hidden'); 
+            chatPopup.classList.add('chat-popup-visible');
         } else {
-            tgPopup.classList.remove('tg-popup-visible'); 
-            tgPopup.classList.add('tg-popup-hidden');
+            chatPopup.classList.remove('chat-popup-visible'); 
+            chatPopup.classList.add('chat-popup-hidden');
         }
     }
     
-    tgBtn.addEventListener('click', toggleTgChat);
+    chatBtn.addEventListener('click', toggleChat);
     closeBtn.addEventListener('click', function() {
-        tgPopup.classList.remove('tg-popup-visible'); 
-        tgPopup.classList.add('tg-popup-hidden');
+        chatPopup.classList.remove('chat-popup-visible'); 
+        chatPopup.classList.add('chat-popup-hidden');
     });
 }
 
@@ -632,5 +632,5 @@ document.addEventListener('DOMContentLoaded', () => {
   loadEpisodes();
   initLogPoseTimer(); 
   initSnowEffect(); 
-  initTelegramWidget();
+  initChatWidget();
 });
