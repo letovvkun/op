@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<!-- Preconnect для ускорения загрузки ресурсов -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.plyr.io">
@@ -280,21 +279,34 @@ body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
 <script type="module" src="js/main.js"></script>
 
-<!-- Виджет Телеграм-комментариев -->
-<div id="tg-floating-button" class="tg-button-style">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20.665 3.717L2.972 10.869C1.986 11.237 1.992 11.835 2.768 12.088L7.152 13.518L17.438 6.76C17.947 6.438 18.411 6.613 18.015 6.985L9.123 15.356L9.088 15.39L8.746 19.16C9.256 19.16 9.471 18.919 9.754 18.632L12.28 16.096L17.29 20.02C18.267 20.592 18.943 20.288 19.176 19.063L22.378 3.398C22.723 1.895 21.728 1.158 20.665 3.717Z" fill="white"/>
+<div id="chat-floating-button" class="chat-button-style">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
     <span>Мини чат</span>
 </div>
 
-<div id="tg-widget-popup" class="tg-popup-hidden">
-    <div class="tg-popup-header">
-        <span>Комментарии</span>
-        <button id="tg-close-btn">&times;</button>
+<div id="chat-widget-popup" class="chat-popup-hidden">
+    <div class="chat-popup-header">
+        <span>Обсуждение</span>
+        <button id="chat-close-btn">&times;</button>
     </div>
-    <div class="tg-widget-content">
-        <script async src="https://comments.app/js/widget.js?3" data-comments-app-website="jNmXdt-K" data-limit="5" data-color="FFFFFF" data-dislikes="1" data-colorful="1" data-dark="1"></script>
+    <div class="chat-widget-content">
+        <script src="https://giscus.app/client.js"
+        data-repo="l3towm-byte/image"
+        data-repo-id="R_kgDOSTLQkA"
+        data-category="General"
+        data-category-id="DIC_kwDOSTLQkM4C-S7f"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="dark"
+        data-lang="ru"
+        crossorigin="anonymous"
+        async>
+    </script>
     </div>
 </div>
 
