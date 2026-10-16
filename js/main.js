@@ -16,26 +16,32 @@ const db = getFirestore(app);
 const analytics = getAnalytics(app);
 const episodesCollection = collection(db, 'episodes');
 
-// --- Глобальные переменные ---
+// Чистая векторная SVG-галочка (не превращается в эмодзи на iOS)
+const CHECK_ICON_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+// --- Состояние ---
 let episodes = [];
 let currentIndex = -1;
-const initialVisibleCount = 8; 
-let visibleEpisodesCount = initialVisibleCount;
+const INITIAL_VISIBLE_COUNT = 8;
+let visibleEpisodesCount = INITIAL_VISIBLE_COUNT;
 let watchedEpisodes = new Set();
-const PLAYER_SOURCE_KEY = 'lastPlayerSource'; 
-let currentSortOrder = 'desc'; 
+const PLAYER_SOURCE_KEY = 'lastPlayerSource';
+const LAST_EPISODE_ID_KEY = 'lastEpisodeFirestoreId';
+let currentSortOrder = 'desc';
 let timerInterval = null;
-let logPoseTargetDate = null;
+let logPoseConfig = null;
+let plyrInstance = null;
 
-let plyrInstance = null; 
+// Данные для быстрого поиска по тайтлам
+let quickSearchTitles = [];
+let isQuickTitlesLoaded = false;
 
-// --- Названия плееров для выпадающего списка ---
 const playerNames = {
-    'hf': 'Без сжатия | Бета',
-    'dzen': 'Dzen | 4K',
-    'mega': 'Moon Player | 1080p',
-    'kodik': 'Kodik | 720p',
-    'subtitles': 'Dzen | Субтитры'
+  hf: 'Без сжатия | Бета',
+  dzen: 'Dzen | 4K',
+  mega: 'Moon Player | 1080p',
+  kodik: 'Kodik | 720p',
+  subtitles: 'Dzen | Субтитры'
 };
 
 // --- DOM Элементы ---
@@ -45,16 +51,11 @@ const playerTitle = document.getElementById('playerTitle');
 const playerSub = document.getElementById('playerSub');
 const metaText = document.getElementById('metaText');
 const search = document.getElementById('search');
-const allBtn = document.getElementById('allBtn');
-const modal = document.getElementById('modal');
-const allTbody = document.getElementById('allTbody');
-const modalSearch = document.getElementById('modalSearch');
 const playerSourceSelect = document.getElementById('playerSource');
 const themeBtn = document.getElementById('themeBtn');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const shareBtn = document.getElementById('shareBtn');
-const closeModalBtn = document.getElementById('closeModal');
 const copyrightModal = document.getElementById('copyrightModal');
 const closeCopyrightModalBtn = document.getElementById('closeCopyrightModal');
 const loadMoreContainer = document.getElementById('loadMoreContainer');
@@ -64,505 +65,636 @@ const paginationInfo = document.getElementById('paginationInfo');
 const sortSelect = document.getElementById('sortOrder');
 const scrollTopBtn = document.getElementById('scrollTopBtn');
 
+// Элементы поиска по тайтлам
+const titleSearchBtn = document.getElementById('titleSearchBtn');
+const titleSearchPopup = document.getElementById('titleSearchPopup');
+const quickTitleInput = document.getElementById('quickTitleInput');
+const quickTitleResults = document.getElementById('quickTitleResults');
+
+// --- Утилиты ---
+function debounce(fn, delay = 250) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function showToast(message) {
+  let toast = document.querySelector('.toast-notification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// --- Быстрый поиск по тайтлам в шапке ---
+async function ensureQuickTitlesLoaded() {
+  if (isQuickTitlesLoaded) return;
+  try {
+    const cached = sessionStorage.getItem('catalogTitles');
+    if (cached) {
+      quickSearchTitles = JSON.parse(cached);
+    } else {
+      const snap = await getDocs(collection(db, "titles"));
+      quickSearchTitles = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      sessionStorage.setItem('catalogTitles', JSON.stringify(quickSearchTitles));
+    }
+    isQuickTitlesLoaded = true;
+    renderQuickTitleResults(quickTitleInput ? quickTitleInput.value : '');
+  } catch (err) {
+    console.error("Ошибка загрузки списка тайтлов:", err);
+    if (quickTitleResults) {
+      quickTitleResults.innerHTML = `<div class="title-search-empty">Ошибка загрузки каталога</div>`;
+    }
+  }
+}
+
+function renderQuickTitleResults(queryText = '') {
+  if (!quickTitleResults) return;
+  const q = queryText.trim().toLowerCase();
+
+  const filtered = quickSearchTitles.filter(t => {
+    const name = (t.name || '').toLowerCase();
+    const genres = (t.genres || '').toLowerCase();
+    return !q || name.includes(q) || genres.includes(q);
+  }).slice(0, 12);
+
+  if (filtered.length === 0) {
+    quickTitleResults.innerHTML = `<div class="title-search-empty">Тайтлы не найдены</div>`;
+    return;
+  }
+
+  quickTitleResults.innerHTML = filtered.map(t => {
+    const link = t.id === 'one_piece' ? 'index.html' : `title.html?id=${encodeURIComponent(t.id)}`;
+    const poster = t.poster || 'https://via.placeholder.com/120x180?text=No+Poster';
+    const meta = t.genres || 'Аниме';
+    return `
+      <a href="${link}" class="title-search-item">
+        <img src="${poster}" alt="${t.name}" loading="lazy">
+        <div class="title-search-item-info">
+          <div class="title-search-item-name">${t.name}</div>
+          <div class="title-search-item-meta">${meta}</div>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+function initQuickTitleSearch() {
+  if (!titleSearchBtn || !titleSearchPopup) return;
+
+  const closeSearchPopup = () => {
+    titleSearchPopup.classList.remove('open');
+    titleSearchBtn.classList.remove('active');
+    titleSearchBtn.setAttribute('aria-expanded', 'false');
+  };
+
+  titleSearchBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !titleSearchPopup.classList.contains('open');
+    titleSearchPopup.classList.toggle('open', willOpen);
+    titleSearchBtn.classList.toggle('active', willOpen);
+    titleSearchBtn.setAttribute('aria-expanded', String(willOpen));
+
+    if (willOpen) {
+      ensureQuickTitlesLoaded();
+      // Фокусируем автоматически только на десктопе, чтобы на смартфонах не прыгала клавиатура при открытии
+      if (quickTitleInput && window.innerWidth > 768) {
+        setTimeout(() => quickTitleInput.focus(), 50);
+      }
+    }
+  });
+
+  if (quickTitleInput) {
+    quickTitleInput.addEventListener('input', debounce((e) => {
+      renderQuickTitleResults(e.target.value);
+    }, 150));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!titleSearchPopup.contains(e.target) && !titleSearchBtn.contains(e.target)) {
+      closeSearchPopup();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && titleSearchPopup.classList.contains('open')) {
+      closeSearchPopup();
+    }
+  });
+}
+
+// --- Награда и прогресс просмотра ---
 function updateBounty() {
   const bountyElem = document.getElementById('bountyAmount');
   if (!bountyElem) return;
-  const pricePerEp = 1500000; 
-  const totalBounty = watchedEpisodes.size * pricePerEp;
-  bountyElem.innerText = totalBounty.toLocaleString('en-US');
+  const totalBounty = watchedEpisodes.size * 1500000;
+  bountyElem.textContent = totalBounty.toLocaleString('en-US');
 }
 
 function loadWatchedStatus() {
-  const saved = localStorage.getItem('watchedEpisodes');
-  if (saved) {
-    watchedEpisodes = new Set(JSON.parse(saved));
+  try {
+    const saved = localStorage.getItem('watchedEpisodes');
+    if (saved) watchedEpisodes = new Set(JSON.parse(saved));
+  } catch (e) {
+    watchedEpisodes = new Set();
   }
-  updateBounty(); 
+  updateBounty();
 }
 
 function saveWatchedStatus() {
   localStorage.setItem('watchedEpisodes', JSON.stringify([...watchedEpisodes]));
 }
 
+function markEpisodeWatched(epId, watched = true) {
+  if (!epId) return;
+  if (watched) watchedEpisodes.add(epId);
+  else watchedEpisodes.delete(epId);
+
+  saveWatchedStatus();
+  updateBounty();
+
+  if (episodesGrid) {
+    const card = episodesGrid.querySelector(`.ep[data-firestore-id="${epId}"]`);
+    if (card) {
+      card.classList.toggle('watched', watched);
+      const btn = card.querySelector('.ep-watch-toggle');
+      if (btn) btn.setAttribute('aria-pressed', String(watched));
+    }
+  }
+}
+
+// --- Умный Лог-пос Таймер (Поддержка точной даты + еженедельного режима) ---
+function computeNextTargetDate(cfg) {
+  const now = new Date();
+
+  if (cfg && cfg.targetDate) {
+    const rawDate = new Date(cfg.targetDate);
+    if (!isNaN(rawDate.getTime())) {
+      if (rawDate > now) return rawDate;
+
+      if (cfg.isWeekly !== false && cfg.mode !== 'once') {
+        const nextDate = new Date(rawDate.getTime());
+        const weekMs = 7 * 24 * 60 * 60 * 1000;
+        const weeksPassed = Math.floor((now.getTime() - nextDate.getTime()) / weekMs) + 1;
+        nextDate.setTime(nextDate.getTime() + weeksPassed * weekMs);
+        return nextDate;
+      }
+      return rawDate;
+    }
+  }
+
+  const targetDay = (cfg && cfg.dayOfWeek !== undefined) ? Number(cfg.dayOfWeek) : 0;
+  let hours = 23;
+  let minutes = 0;
+
+  if (cfg && typeof cfg.time === 'string' && cfg.time.includes(':')) {
+    const parts = cfg.time.split(':');
+    hours = parseInt(parts[0], 10) || 23;
+    minutes = parseInt(parts[1], 10) || 0;
+  } else if (cfg && cfg.hour !== undefined) {
+    hours = Number(cfg.hour);
+    minutes = Number(cfg.minute || 0);
+  }
+
+  const mskOffsetMs = 3 * 60 * 60 * 1000;
+  const nowMsk = new Date(now.getTime() + mskOffsetMs);
+  const currentDay = nowMsk.getUTCDay();
+
+  let daysUntil = (targetDay - currentDay + 7) % 7;
+  const candidateMsk = new Date(nowMsk.getTime());
+  candidateMsk.setUTCDate(nowMsk.getUTCDate() + daysUntil);
+  candidateMsk.setUTCHours(hours, minutes, 0, 0);
+
+  if (candidateMsk <= nowMsk) {
+    candidateMsk.setUTCDate(candidateMsk.getUTCDate() + 7);
+  }
+
+  return new Date(candidateMsk.getTime() - mskOffsetMs);
+}
+
 async function initLogPoseTimer() {
   const countElem = document.getElementById('countdown');
-  if(!countElem) return;
+  if (!countElem) return;
 
   try {
-    const docRef = doc(db, 'settings', 'log_pose');
-    const snap = await getDoc(docRef);
-    if (snap.exists() && snap.data().targetDate) {
-      logPoseTargetDate = new Date(snap.data().targetDate);
-      startCountdown();
+    const snap = await getDoc(doc(db, 'settings', 'log_pose'));
+    if (snap.exists()) {
+      logPoseConfig = snap.data();
     } else {
-      countElem.innerText = "Ждем инфо";
+      logPoseConfig = { isWeekly: true, dayOfWeek: 0, time: '23:00' };
     }
+    startCountdown();
   } catch (error) {
     console.error("Ошибка таймера:", error);
-    countElem.innerText = "--:--:--";
+    logPoseConfig = { isWeekly: true, dayOfWeek: 0, time: '23:00' };
+    startCountdown();
   }
 }
 
 function startCountdown() {
   const countElem = document.getElementById('countdown');
-  if (!countElem || !logPoseTargetDate) return;
+  if (!countElem) return;
 
-  function update() {
-    const now = new Date();
-    const diff = logPoseTargetDate - now;
+  const update = () => {
+    const targetDate = computeNextTargetDate(logPoseConfig);
+    const diff = targetDate - new Date();
 
     if (diff <= 0) {
-      countElem.innerText = "Уже скоро!";
-      if (timerInterval) clearInterval(timerInterval);
+      countElem.textContent = "Уже скоро!";
       return;
     }
 
     const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const m = Math.floor((diff / 1000 / 60) % 60);
-    
-    const hStr = h < 10 ? '0' + h : h;
-    const mStr = m < 10 ? '0' + m : m;
+    const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
+    const m = String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, '0');
 
-    if (d > 0) {
-        countElem.innerText = `${d}д ${hStr}ч ${mStr}м`;
-    } else {
-        countElem.innerText = `${hStr}ч ${mStr}м`;
-    }
-  }
+    countElem.textContent = d > 0 ? `${d}д ${h}ч ${m}м` : `${h}ч ${m}м`;
+  };
 
-  update(); 
-  timerInterval = setInterval(update, 60000); 
+  update();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(update, 30000);
 }
 
+// --- Загрузка и рендер серий ---
 function renderSkeletons() {
   if (!episodesGrid) return;
-  episodesGrid.innerHTML = '';
-  let skeletonsHTML = '';
-  for (let i = 0; i < initialVisibleCount; i++) {
-      skeletonsHTML += `
-        <div class="ep" style="pointer-events: none;">
-          <div class="thumb skeleton-loader" style="border:none;"></div>
-          <div class="meta" style="width:100%">
-            <div class="skeleton-loader" style="height:14px; width:70%; margin-bottom:6px;"></div>
-            <div class="skeleton-loader" style="height:12px; width:40%;"></div>
-          </div>
-        </div>`;
-  }
-  episodesGrid.innerHTML = skeletonsHTML;
+  episodesGrid.innerHTML = Array.from({ length: INITIAL_VISIBLE_COUNT }, () => `
+    <div class="ep" style="pointer-events: none;">
+      <div class="thumb skeleton-loader" style="border:none;"></div>
+      <div class="meta" style="width:100%">
+        <div class="skeleton-loader" style="height:14px; width:70%; margin-bottom:6px;"></div>
+        <div class="skeleton-loader" style="height:12px; width:40%;"></div>
+      </div>
+    </div>
+  `).join('');
 }
 
 function sortEpisodes() {
-  if (currentSortOrder === 'desc') {
-      episodes.sort((a, b) => b.id - a.id);
-  } else {
-      episodes.sort((a, b) => a.id - b.id);
-  }
-  renderList(search.value);
+  episodes.sort((a, b) => currentSortOrder === 'desc' ? b.id - a.id : a.id - b.id);
+  renderList(search ? search.value : '');
 }
 
-// 🔥 СЕРВЕРНЫЙ ЛИМИТ СЕРИЙ, ФИЛЬТР ДЛЯ ГЛАВНОЙ СТРАНИЦЫ И КЭШИРОВАНИЕ
 async function loadEpisodes() {
   renderSkeletons();
-  
+
   try {
-    const cachedEpisodes = sessionStorage.getItem('mainEpisodes');
-    
-    if (cachedEpisodes) {
-        episodes = JSON.parse(cachedEpisodes);
+    const cached = sessionStorage.getItem('mainEpisodes');
+    if (cached) {
+      episodes = JSON.parse(cached);
     } else {
-        const q = query(episodesCollection, orderBy("id", "desc"), limit(150));
-        const querySnapshot = await getDocs(q);
-        
-        episodes = querySnapshot.docs
-            .map(doc => ({ firestoreId: doc.id, ...doc.data() }))
-            .filter(ep => !ep.titleId || ep.titleId === 'one_piece');
-            
-        sessionStorage.setItem('mainEpisodes', JSON.stringify(episodes));
+      const q = query(episodesCollection, orderBy("id", "desc"), limit(150));
+      const snap = await getDocs(q);
+      episodes = snap.docs
+        .map(d => ({ firestoreId: d.id, ...d.data() }))
+        .filter(ep => !ep.titleId || ep.titleId === 'one_piece');
+
+      sessionStorage.setItem('mainEpisodes', JSON.stringify(episodes));
     }
-    
+
     sortEpisodes();
-    renderList();
-    renderModalTable('');
-    
-    const savedIndex = localStorage.getItem('lastEpisodeIndex');
-    const indexToLoad = (savedIndex !== null && episodes[savedIndex]) ? parseInt(savedIndex, 10) : 0;
-    
+
     if (episodes.length > 0) {
-      loadEpisode(indexToLoad, false); 
+      const savedId = localStorage.getItem(LAST_EPISODE_ID_KEY);
+      const foundIdx = savedId ? episodes.findIndex(e => e.firestoreId === savedId) : -1;
+      loadEpisode(foundIdx !== -1 ? foundIdx : 0, false);
     } else {
-      if(playerEmbed) playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
-      if(playerTitle) playerTitle.textContent = 'Нет доступных серий';
+      if (playerEmbed) playerEmbed.innerHTML = `<span>Серии пока не добавлены.</span>`;
+      if (playerTitle) playerTitle.textContent = 'Нет доступных серий';
     }
   } catch (error) {
-    console.error("Ошибка при загрузке серий из Firestore: ", error);
-    if(episodesGrid) episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--error);">Ошибка загрузки данных.</div>`;
+    console.error("Ошибка при загрузке серий из Firestore:", error);
+    if (episodesGrid) {
+      episodesGrid.innerHTML = `<div style="text-align:center;padding:2rem;width:100%;color:var(--error);">Ошибка загрузки данных.</div>`;
+    }
   }
+}
+
+function getFilteredEpisodes(filter = '') {
+  const term = filter.trim().toLowerCase();
+  return episodes.filter(ep =>
+    term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
+  );
 }
 
 function renderList(filter = '') {
   if (!episodesGrid) return;
   const term = filter.trim().toLowerCase();
-  const filteredEpisodes = episodes.filter(ep =>
-      term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
-  );
+  const filteredEpisodes = getFilteredEpisodes(filter);
   const episodesToRender = filteredEpisodes.slice(0, visibleEpisodesCount);
-  episodesGrid.innerHTML = ''; 
+
+  episodesGrid.innerHTML = '';
+
   if (episodesToRender.length === 0) {
-      episodesGrid.innerHTML = '<div style="text-align:center;padding:2rem;width:100%">Ничего не найдено.</div>';
+    episodesGrid.innerHTML = '<div style="text-align:center;padding:2rem;width:100%;color:var(--muted);">Ничего не найдено.</div>';
   } else {
-      const fragment = document.createDocumentFragment();
-      
-      episodesToRender.forEach((ep, loopIndex) => {
-          const originalIndex = episodes.findIndex(e => e.firestoreId === ep.firestoreId);
-          
-          const el = document.createElement('div');
-          el.className = 'ep';
-          
-          if (!term && loopIndex === 0 && currentSortOrder === 'desc') {
-              el.classList.add('new-episode');
-          }
+    const fragment = document.createDocumentFragment();
 
-          el.tabIndex = 0;
-          el.setAttribute('role', 'button');
-          el.dataset.firestoreId = ep.firestoreId; 
-          
-          if (watchedEpisodes.has(ep.firestoreId)) {
-              el.classList.add('watched');
-          }
+    episodesToRender.forEach((ep, loopIndex) => {
+      const el = document.createElement('div');
+      el.className = 'ep';
+      if (!term && loopIndex === 0 && currentSortOrder === 'desc') {
+        el.classList.add('new-episode');
+      }
 
-          el.innerHTML = `
-            <div class="thumb" aria-hidden="true">
-              ${ep.thumb ? `<img src="${ep.thumb}" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy">` : `EP ${ep.id}`}
-            </div>
-            <div class="meta">
-              <div class="t">${ep.title}</div>
-              <div class="s">${ep.date} • ${ep.quality}</div>
-            </div>`;
-          
-          const clickHandler = () => {
-              if (watchedEpisodes.has(ep.firestoreId)) {
-                  watchedEpisodes.delete(ep.firestoreId);
-                  el.classList.remove('watched');
-              } else {
-                  watchedEpisodes.add(ep.firestoreId);
-                  el.classList.add('watched');
-              }
-              saveWatchedStatus(); 
-              updateBounty(); 
+      const isWatched = watchedEpisodes.has(ep.firestoreId);
+      if (isWatched) el.classList.add('watched');
 
-              if (currentIndex !== originalIndex) {
-                  loadEpisode(originalIndex, true);
-              }
-          };
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.dataset.firestoreId = ep.firestoreId;
 
-          el.onclick = clickHandler;
-          el.onkeypress = (e) => { if (e.key === 'Enter' || e.key === ' ') clickHandler() };
-          fragment.appendChild(el);
-      });
-      
-      episodesGrid.appendChild(fragment);
+      el.innerHTML = `
+        <div class="thumb" aria-hidden="true">
+          ${ep.thumb ? `<img src="${ep.thumb}" alt="" loading="lazy">` : `EP ${ep.id}`}
+        </div>
+        <div class="meta">
+          <div class="t">${ep.title}</div>
+          <div class="s">${ep.date} • ${ep.quality}</div>
+        </div>
+        <button type="button" class="ep-watch-toggle" title="Отметить просмотренным" aria-label="Отметить просмотренным" aria-pressed="${isWatched}">${CHECK_ICON_SVG}</button>
+      `;
+
+      fragment.appendChild(el);
+    });
+
+    episodesGrid.appendChild(fragment);
   }
 
   if (loadMoreContainer) {
-      if (filteredEpisodes.length > visibleEpisodesCount) {
-          loadMoreContainer.style.display = 'flex';
-          loadMoreText.textContent = 'Показать еще';
-          loadMoreBtn.classList.remove('expanded');
-      } else if (visibleEpisodesCount > initialVisibleCount && filteredEpisodes.length > 0) {
-          loadMoreContainer.style.display = 'flex';
-          loadMoreText.textContent = 'Свернуть';
-          loadMoreBtn.classList.add('expanded');
-      } else {
-          loadMoreContainer.style.display = 'none';
-      }
+    if (filteredEpisodes.length > visibleEpisodesCount) {
+      loadMoreContainer.style.display = 'flex';
+      loadMoreText.textContent = 'Показать еще';
+      loadMoreBtn.classList.remove('expanded');
+    } else if (visibleEpisodesCount > INITIAL_VISIBLE_COUNT && filteredEpisodes.length > 0) {
+      loadMoreContainer.style.display = 'flex';
+      loadMoreText.textContent = 'Свернуть';
+      loadMoreBtn.classList.add('expanded');
+    } else {
+      loadMoreContainer.style.display = 'none';
+    }
   }
 
   if (paginationInfo) {
-      const currentCount = Math.min(visibleEpisodesCount, filteredEpisodes.length);
-      paginationInfo.textContent = `Показано ${currentCount} из ${filteredEpisodes.length}`;
+    const currentCount = Math.min(visibleEpisodesCount, filteredEpisodes.length);
+    paginationInfo.textContent = `Показано ${currentCount} из ${filteredEpisodes.length}`;
   }
 
   markActive();
+}
+
+if (episodesGrid) {
+  const handleGridAction = (e) => {
+    const toggleBtn = e.target.closest('.ep-watch-toggle');
+    const card = e.target.closest('.ep');
+    if (!card || !card.dataset.firestoreId) return;
+
+    const epId = card.dataset.firestoreId;
+
+    if (toggleBtn) {
+      e.stopPropagation();
+      e.preventDefault();
+      markEpisodeWatched(epId, !watchedEpisodes.has(epId));
+      return;
+    }
+
+    const targetIdx = episodes.findIndex(item => item.firestoreId === epId);
+    if (!watchedEpisodes.has(epId)) {
+      markEpisodeWatched(epId, true);
+    }
+    if (targetIdx !== -1 && currentIndex !== targetIdx) {
+      loadEpisode(targetIdx, true);
+    }
+  };
+
+  episodesGrid.addEventListener('click', handleGridAction);
+  episodesGrid.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleGridAction(e);
+    }
+  });
+}
+
+function ensureEpisodeVisibleInList(ep) {
+  if (!ep) return;
+  const currentSearch = search ? search.value : '';
+  const filtered = getFilteredEpisodes(currentSearch);
+  const posInFiltered = filtered.findIndex(item => item.firestoreId === ep.firestoreId);
+
+  if (posInFiltered !== -1 && posInFiltered >= visibleEpisodesCount) {
+    const extraNeeded = posInFiltered + 1 - visibleEpisodesCount;
+    const steps = Math.ceil(extraNeeded / 12) * 12;
+    visibleEpisodesCount = Math.min(visibleEpisodesCount + steps, filtered.length);
+    renderList(currentSearch);
+  }
 }
 
 function loadEpisode(idx, shouldScroll = false) {
   if (idx < 0 || idx >= episodes.length) return;
   currentIndex = idx;
-  localStorage.setItem('lastEpisodeIndex', currentIndex);
-  
   const ep = episodes[idx];
+
+  localStorage.setItem(LAST_EPISODE_ID_KEY, ep.firestoreId);
   document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
 
+  ensureEpisodeVisibleInList(ep);
+
   if (playerSourceSelect) {
-      playerSourceSelect.innerHTML = '';
-      
-      const availablePlayers = Object.keys(ep.players || {}).filter(k => ep.players[k]);
+    playerSourceSelect.innerHTML = '';
+    const availablePlayers = Object.keys(ep.players || {}).filter(k => ep.players[k]);
 
-      if (availablePlayers.length === 0) {
-          playerSourceSelect.innerHTML = `<option value="">Нет плееров</option>`;
-          playerEmbed.innerHTML = `<span style="color:var(--muted);">Для этой серии видео пока недоступно.</span>`;
-          if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
-      } else {
-          availablePlayers.forEach(key => {
-              const name = playerNames[key] || key.toUpperCase();
-              playerSourceSelect.innerHTML += `<option value="${key}">${name}</option>`;
+    if (plyrInstance) {
+      plyrInstance.destroy();
+      plyrInstance = null;
+    }
+
+    if (availablePlayers.length === 0) {
+      playerSourceSelect.innerHTML = `<option value="">Нет плееров</option>`;
+      playerEmbed.innerHTML = `<span style="color:var(--muted);">Для этой серии видео пока недоступно.</span>`;
+    } else {
+      playerSourceSelect.innerHTML = availablePlayers.map(key => {
+        const name = playerNames[key] || key.toUpperCase();
+        return `<option value="${key}">${name}</option>`;
+      }).join('');
+
+      const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'hf';
+      const selectedPlayer = availablePlayers.includes(savedSource) ? savedSource : availablePlayers[0];
+      playerSourceSelect.value = selectedPlayer;
+
+      if (selectedPlayer === 'hf') {
+        const fileName = ep.players.hf;
+        const videoUrl = `https://huggingface.co/datasets/letovvkun/op_archive/resolve/main/${fileName}?download=true`;
+        playerEmbed.innerHTML = `<video id="plyr-hf-player" playsinline controls><source src="${videoUrl}" type="video/mp4" size="1080"></video>`;
+        if (typeof Plyr !== 'undefined') {
+          plyrInstance = new Plyr('#plyr-hf-player', {
+            title: ep.title,
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen'],
+            settings: ['quality', 'speed'],
+            quality: { default: 1080, options: [1080, 720, 480] },
+            fullscreen: { iosNative: true }
           });
-
-          const savedSource = localStorage.getItem(PLAYER_SOURCE_KEY) || 'hf';
-          const selectedPlayer = availablePlayers.includes(savedSource) ? savedSource : availablePlayers[0];
-          playerSourceSelect.value = selectedPlayer;
-
-          if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
-
-          if (selectedPlayer === 'hf') {
-              const fileName = ep.players.hf;
-              const videoUrl = `https://huggingface.co/datasets/letovvkun/op_archive/resolve/main/${fileName}?download=true`;
-              playerEmbed.innerHTML = `<video id="plyr-hf-player" playsinline controls><source src="${videoUrl}" type="video/mp4" size="1080"></video>`;
-              setTimeout(() => {
-                  plyrInstance = new Plyr('#plyr-hf-player', {
-                      title: ep.title, controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen'],
-                      settings: ['quality', 'speed'], quality: { default: 1080, options: [1080, 720, 480] },
-                      fullscreen: { iosNative: true }
-                  });
-              }, 50);
-          } else {
-              playerEmbed.innerHTML = ep.players[selectedPlayer];
-          }
+        }
+      } else {
+        playerEmbed.innerHTML = ep.players[selectedPlayer];
       }
+    }
   }
 
-  if(playerTitle) playerTitle.textContent = ep.title;
-  if(playerSub) playerSub.textContent = `${ep.date} • ${ep.quality}`;
-  if(metaText) metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
+  if (playerTitle) playerTitle.textContent = ep.title;
+  if (playerSub) playerSub.textContent = `${ep.date} • ${ep.quality}`;
+  if (metaText) metaText.textContent = `EP ${ep.id} • Загружено: ${ep.date}`;
 
   markActive();
 
-  if (shouldScroll && window.innerWidth < 980) {
-      const playerSection = document.getElementById('playerTitle');
-      if(playerSection) {
-          playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+  if (shouldScroll && window.innerWidth < 980 && playerTitle) {
+    playerTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
 function markActive() {
-  if (currentIndex < 0) return;
+  if (currentIndex < 0 || !episodesGrid) return;
   const currentEpisodeId = episodes[currentIndex]?.firestoreId;
-  if (!currentEpisodeId) return;
-  if (!episodesGrid) return;
-  
-  const nodes = Array.from(episodesGrid.children);
-  nodes.forEach(node => {
-      if (node.dataset.firestoreId === currentEpisodeId) {
-          node.classList.add('active');
-      } else {
-          node.classList.remove('active');
-      }
-  });
-}
-
-function debounce(func, timeout = 300){
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => { func.apply(this, args); }, timeout);
-  };
-}
-
-function openModal() {
-  renderModalTable('');
-  if(modal) {
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-  }
-  if(modalSearch) modalSearch.focus();
-}
-
-function closeModal() {
-  if(modal) {
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
-  }
-}
-
-function renderModalTable(filter = '') {
-  if(!allTbody) return;
-  allTbody.innerHTML = '';
-  const q = filter.trim().toLowerCase();
-  
-  const fragment = document.createDocumentFragment();
-  
-  episodes.forEach((ep, idx) => {
-    if (q && !(String(ep.id).includes(q) || ep.title.toLowerCase().includes(q))) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="width:70px"><strong>${ep.id}</strong></td>
-      <td>${ep.title}</td>
-      <td style="width:120px">${ep.date}</td>
-      <td style="width:80px">${ep.quality}</td>
-      <td class="action-cell"><button class="btn" data-idx="${idx}">Смотреть</button></td>`;
-    fragment.appendChild(tr);
-  });
-  
-  allTbody.appendChild(fragment);
-
-  allTbody.querySelectorAll('button').forEach(b => {
-    b.onclick = () => {
-      const idx = Number(b.getAttribute('data-idx'));
-      loadEpisode(idx, true);
-      closeModal();
-    };
+  Array.from(episodesGrid.children).forEach(node => {
+    node.classList.toggle('active', node.dataset.firestoreId === currentEpisodeId);
   });
 }
 
 // --- Обработчики событий ---
-if(prevBtn) prevBtn.addEventListener('click', () => {
-  if (currentIndex < episodes.length - 1) loadEpisode(currentIndex + 1);
-});
-if(nextBtn) nextBtn.addEventListener('click', () => {
-  if (currentIndex > 0) loadEpisode(currentIndex - 1);
-});
-
-// --- Логика плавающего меню навигации ---
-const floatingMenuBtn = document.getElementById('floatingMenuBtn');
-const floatingMenu = document.getElementById('floatingMenu');
-
-if (floatingMenuBtn && floatingMenu) {
-    floatingMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        floatingMenu.classList.toggle('active');
-        floatingMenuBtn.classList.toggle('is-open'); 
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!floatingMenu.contains(e.target) && e.target !== floatingMenuBtn) {
-            floatingMenu.classList.remove('active');
-            floatingMenuBtn.classList.remove('is-open'); 
-        }
-    });
+if (prevBtn) {
+  prevBtn.addEventListener('click', () => {
+    if (currentIndex < episodes.length - 1) {
+      loadEpisode(currentIndex + 1);
+    }
+  });
+}
+if (nextBtn) {
+  nextBtn.addEventListener('click', () => {
+    if (currentIndex > 0) {
+      loadEpisode(currentIndex - 1);
+    }
+  });
 }
 
-if(playerSourceSelect) playerSourceSelect.addEventListener('change', () => {
-  const newPlayer = playerSourceSelect.value;
-  localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer); 
-  
-  logEvent(analytics, 'select_player', { player_name: newPlayer });
+const floatingMenuBtn = document.getElementById('floatingMenuBtn');
+const floatingMenu = document.getElementById('floatingMenu');
+if (floatingMenuBtn && floatingMenu) {
+  floatingMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    floatingMenu.classList.toggle('active');
+    floatingMenuBtn.classList.toggle('is-open');
+  });
 
-  if (currentIndex !== -1) {
-    loadEpisode(currentIndex);
-  }
-});
+  document.addEventListener('click', (e) => {
+    if (!floatingMenu.contains(e.target) && e.target !== floatingMenuBtn) {
+      floatingMenu.classList.remove('active');
+      floatingMenuBtn.classList.remove('is-open');
+    }
+  });
+}
 
-const processSearch = debounce((e) => {
-  visibleEpisodesCount = initialVisibleCount;
-  renderList(e.target.value);
-});
-if(search) search.addEventListener('input', processSearch);
+if (playerSourceSelect) {
+  playerSourceSelect.addEventListener('change', () => {
+    const newPlayer = playerSourceSelect.value;
+    localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer);
+    logEvent(analytics, 'select_player', { player_name: newPlayer });
+    if (currentIndex !== -1) loadEpisode(currentIndex);
+  });
+}
 
-if(sortSelect) sortSelect.addEventListener('change', (e) => {
-  currentSortOrder = e.target.value;
-  visibleEpisodesCount = initialVisibleCount; 
-  sortEpisodes();
-});
+if (search) {
+  search.addEventListener('input', debounce((e) => {
+    visibleEpisodesCount = INITIAL_VISIBLE_COUNT;
+    renderList(e.target.value);
+  }));
+}
 
-if(loadMoreBtn) loadMoreBtn.addEventListener('click', () => {
-  const isExpanded = loadMoreBtn.classList.contains('expanded');
+if (sortSelect) {
+  sortSelect.addEventListener('change', (e) => {
+    currentSortOrder = e.target.value;
+    visibleEpisodesCount = INITIAL_VISIBLE_COUNT;
+    sortEpisodes();
+  });
+}
 
-  if (isExpanded) {
+if (loadMoreBtn) {
+  loadMoreBtn.addEventListener('click', () => {
+    const isExpanded = loadMoreBtn.classList.contains('expanded');
+    const currentSearch = search ? search.value : '';
+
+    if (isExpanded) {
       const episodesOnScreen = episodesGrid.querySelectorAll('.ep');
-      for (let i = initialVisibleCount; i < episodesOnScreen.length; i++) {
-          episodesOnScreen[i].classList.add('hiding');
+      for (let i = INITIAL_VISIBLE_COUNT; i < episodesOnScreen.length; i++) {
+        episodesOnScreen[i].classList.add('hiding');
       }
       setTimeout(() => {
-          visibleEpisodesCount = initialVisibleCount;
-          renderList(search.value);
-          episodesGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
-  } else {
-      const term = search.value.trim().toLowerCase();
-      const filteredEpisodes = episodes.filter(ep =>
-          term ? ep.title.toLowerCase().includes(term) || String(ep.id).includes(term) : true
-      );
-      
-      const nextCount = visibleEpisodesCount + 12;
-      
-      if (nextCount >= filteredEpisodes.length) {
-           visibleEpisodesCount = filteredEpisodes.length;
-      } else {
-           visibleEpisodesCount = nextCount;
-      }
-      
-      renderList(search.value);
-  }
-});
+        visibleEpisodesCount = INITIAL_VISIBLE_COUNT;
+        renderList(currentSearch);
+        episodesGrid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 250);
+    } else {
+      const totalFiltered = getFilteredEpisodes(currentSearch).length;
+      visibleEpisodesCount = Math.min(visibleEpisodesCount + 12, totalFiltered);
+      renderList(currentSearch);
+    }
+  });
+}
 
 window.addEventListener('scroll', () => {
-  if(!scrollTopBtn) return;
-  if (window.scrollY > 500) {
-      scrollTopBtn.classList.add('visible');
-  } else {
-      scrollTopBtn.classList.remove('visible');
-  }
-});
+  if (scrollTopBtn) scrollTopBtn.classList.toggle('visible', window.scrollY > 500);
+}, { passive: true });
 
-if(scrollTopBtn) scrollTopBtn.addEventListener('click', () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+if (scrollTopBtn) {
+  scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
 
-if(allBtn) allBtn.addEventListener('click', openModal);
-if(closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-if(modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+if (shareBtn) {
+  shareBtn.addEventListener('click', async () => {
+    const shareData = {
+      title: 'Ван-Пис в озвучке Макс Летов & ShiYori',
+      text: 'Смотрю Ван-Пис в новой озвучке!',
+      url: window.location.href
+    };
 
-const processModalSearch = debounce((e) => renderModalTable(e.target.value));
-if(modalSearch) modalSearch.addEventListener('input', processModalSearch);
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Ссылка на сайт скопирована!');
+      }
+    } catch (err) {}
+  });
+}
 
-if(shareBtn) shareBtn.addEventListener('click', async () => {
-  const shareData = {
-    title: 'Ван-Пис в озвучке Макс Летов & ShiYori',
-    text: 'Смотрю Ван-Пис в новой озвучке!',
-    url: window.location.href
-  };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('Ссылка на сайт скопирована!');
-      }, () => {
-        alert('Не удалось скопировать ссылку.');
-      });
-    }
-  } catch (err) {
-    console.log("Пользователь отменил отправку.");
-  }
-});
-
-if(themeBtn) themeBtn.addEventListener('click', () => {
-  const body = document.body;
-  const currentTheme = body.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  body.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-});
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  });
+}
 
 if (copyrightModal && closeCopyrightModalBtn) {
-    closeCopyrightModalBtn.addEventListener('click', () => {
-        copyrightModal.classList.remove('open');
-        copyrightModal.setAttribute('aria-hidden', 'true');
-    });
-    copyrightModal.addEventListener('click', (e) => {
-        if (e.target === copyrightModal) {
-            copyrightModal.classList.remove('open');
-            copyrightModal.setAttribute('aria-hidden', 'true');
-        }
-    });
+  const closeCopy = () => {
+    copyrightModal.classList.remove('open');
+    copyrightModal.setAttribute('aria-hidden', 'true');
+  };
+  closeCopyrightModalBtn.addEventListener('click', closeCopy);
+  copyrightModal.addEventListener('click', (e) => { if (e.target === copyrightModal) closeCopy(); });
 }
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (modal && modal.classList.contains('open')) closeModal();
     if (copyrightModal && copyrightModal.classList.contains('open')) {
       copyrightModal.classList.remove('open');
       copyrightModal.setAttribute('aria-hidden', 'true');
@@ -571,66 +703,58 @@ document.addEventListener('keydown', (e) => {
 });
 
 function initSnowEffect() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const now = new Date();
-  const month = now.getMonth(); 
+  const month = now.getMonth();
   const day = now.getDate();
   const isSeason = (month === 11 && day >= 10) || (month === 0 && day <= 20);
-  if (!isSeason) return; 
+  if (!isSeason) return;
 
   const wrapper = document.createElement('div');
   wrapper.className = 'snow-wrapper';
-  document.body.appendChild(wrapper);
+  const fragment = document.createDocumentFragment();
 
-  const flakesCount = 50; 
-  for (let i = 0; i < flakesCount; i++) {
+  for (let i = 0; i < 45; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
-    const size = Math.random() * 3 + 2; 
-    const left = Math.random() * 100; 
-    const duration = Math.random() * 10 + 10; 
-    const delay = Math.random() * -20; 
-    const opacity = Math.random() * 0.4 + 0.4; 
+    const size = (Math.random() * 3 + 2).toFixed(1);
     flake.style.width = `${size}px`;
     flake.style.height = `${size}px`;
-    flake.style.left = `${left}%`;
-    flake.style.animationDuration = `${duration}s`;
-    flake.style.animationDelay = `${delay}s`;
-    flake.style.opacity = opacity;
-    wrapper.appendChild(flake);
+    flake.style.left = `${(Math.random() * 100).toFixed(1)}%`;
+    flake.style.animationDuration = `${(Math.random() * 10 + 10).toFixed(1)}s`;
+    flake.style.animationDelay = `${(Math.random() * -20).toFixed(1)}s`;
+    flake.style.opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
+    fragment.appendChild(flake);
   }
+
+  wrapper.appendChild(fragment);
+  document.body.appendChild(wrapper);
 }
 
-// --- ЛОГИКА ВИДЖЕТА ЧАТА (GISCUS) ---
 function initChatWidget() {
-    const chatBtn = document.getElementById('chat-floating-button');
-    const chatPopup = document.getElementById('chat-widget-popup');
-    const closeBtn = document.getElementById('chat-close-btn');
-    
-    if(!chatBtn || !chatPopup || !closeBtn) return;
+  const chatBtn = document.getElementById('chat-floating-button');
+  const chatPopup = document.getElementById('chat-widget-popup');
+  const closeBtn = document.getElementById('chat-close-btn');
+  if (!chatBtn || !chatPopup || !closeBtn) return;
 
-    function toggleChat() {
-        if (chatPopup.classList.contains('chat-popup-hidden')) {
-            chatPopup.classList.remove('chat-popup-hidden'); 
-            chatPopup.classList.add('chat-popup-visible');
-        } else {
-            chatPopup.classList.remove('chat-popup-visible'); 
-            chatPopup.classList.add('chat-popup-hidden');
-        }
-    }
-    
-    chatBtn.addEventListener('click', toggleChat);
-    closeBtn.addEventListener('click', function() {
-        chatPopup.classList.remove('chat-popup-visible'); 
-        chatPopup.classList.add('chat-popup-hidden');
-    });
+  chatBtn.addEventListener('click', () => {
+    const isHidden = chatPopup.classList.contains('chat-popup-hidden');
+    chatPopup.classList.toggle('chat-popup-hidden', !isHidden);
+    chatPopup.classList.toggle('chat-popup-visible', isHidden);
+  });
+
+  closeBtn.addEventListener('click', () => {
+    chatPopup.classList.remove('chat-popup-visible');
+    chatPopup.classList.add('chat-popup-hidden');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  document.body.setAttribute('data-theme', savedTheme);
+  document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
   loadWatchedStatus();
   loadEpisodes();
-  initLogPoseTimer(); 
-  initSnowEffect(); 
+  initLogPoseTimer();
+  initSnowEffect();
   initChatWidget();
+  initQuickTitleSearch();
 });
