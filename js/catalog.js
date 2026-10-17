@@ -1,14 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw",
-  authDomain: "letovshiyori.firebaseapp.com",
-  projectId: "letovshiyori"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from "./firebase.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 let allTitles = [];
 
@@ -166,7 +157,6 @@ if (searchInput) {
   searchInput.addEventListener('input', debounce(renderCatalog, 250));
 }
 
-// Оптимизированный перенос сайдбара через matchMedia (срабатывает только при пересечении 980px)
 const mobileQuery = window.matchMedia('(max-width: 980px)');
 function handleViewportChange(e) {
   if (!catalogSidebar || !catalogLayout) return;
