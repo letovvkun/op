@@ -1,19 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
+import { db, analytics } from "./firebase.js";
+import { collection, getDocs, orderBy, query, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { logEvent } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw",
-  authDomain: "letovshiyori.firebaseapp.com",
-  projectId: "letovshiyori",
-  storageBucket: "letovshiyori.appspot.com",
-  messagingSenderId: "379203362104",
-  appId: "1:379203362104:web:20235be9bbbbfdbd6df5cd"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const analytics = getAnalytics(app);
 const episodesCollection = collection(db, 'episodes');
 
 // Чистая векторная SVG-галочка (не превращается в эмодзи на iOS)
@@ -164,7 +152,6 @@ function initQuickTitleSearch() {
 
     if (willOpen) {
       ensureQuickTitlesLoaded();
-      // Фокусируем автоматически только на десктопе, чтобы на смартфонах не прыгала клавиатура при открытии
       if (quickTitleInput && window.innerWidth > 768) {
         setTimeout(() => quickTitleInput.focus(), 50);
       }
@@ -230,7 +217,7 @@ function markEpisodeWatched(epId, watched = true) {
   }
 }
 
-// --- Умный Лог-пос Таймер (Поддержка точной даты + еженедельного режима) ---
+// --- Лог-пос Таймер ---
 function computeNextTargetDate(cfg) {
   const now = new Date();
 
@@ -497,6 +484,41 @@ function ensureEpisodeVisibleInList(ep) {
   }
 }
 
+// Безопасный рендер видеоплеера (Защита от XSS)
+function setSafePlayerEmbed(rawContent, episodeTitle = '') {
+  playerEmbed.innerHTML = '';
+  if (!rawContent) {
+    playerEmbed.innerHTML = `<span style="color:var(--muted);">Видео пока недоступно.</span>`;
+    return;
+  }
+
+  const trimmed = rawContent.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const iframe = document.createElement('iframe');
+    iframe.src = trimmed;
+    iframe.title = episodeTitle || 'Плеер';
+    iframe.allow = "autoplay; fullscreen; picture-in-picture";
+    iframe.allowFullscreen = true;
+    playerEmbed.appendChild(iframe);
+  } else if (trimmed.startsWith('<iframe')) {
+    const parser = new DOMParser();
+    const docParsed = parser.parseFromString(trimmed, 'text/html');
+    const srcIframe = docParsed.querySelector('iframe');
+    if (srcIframe && srcIframe.src) {
+      const iframe = document.createElement('iframe');
+      iframe.src = srcIframe.src;
+      iframe.title = episodeTitle || 'Плеер';
+      iframe.allow = "autoplay; fullscreen; picture-in-picture";
+      iframe.allowFullscreen = true;
+      playerEmbed.appendChild(iframe);
+    } else {
+      playerEmbed.innerHTML = trimmed;
+    }
+  } else {
+    playerEmbed.innerHTML = trimmed;
+  }
+}
+
 function loadEpisode(idx, shouldScroll = false) {
   if (idx < 0 || idx >= episodes.length) return;
   currentIndex = idx;
@@ -543,7 +565,7 @@ function loadEpisode(idx, shouldScroll = false) {
           });
         }
       } else {
-        playerEmbed.innerHTML = ep.players[selectedPlayer];
+        setSafePlayerEmbed(ep.players[selectedPlayer], ep.title);
       }
     }
   }
