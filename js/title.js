@@ -1,14 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw",
-  authDomain: "letovshiyori.firebaseapp.com",
-  projectId: "letovshiyori"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from "./firebase.js";
+import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const currentTitleId = urlParams.get('id');
@@ -400,6 +391,41 @@ function ensureEpisodeVisibleInList(ep) {
   }
 }
 
+// Безопасный рендер видеоплеера (Защита от XSS)
+function setSafePlayerEmbed(rawContent, episodeTitle = '') {
+  playerEmbed.innerHTML = '';
+  if (!rawContent) {
+    playerEmbed.innerHTML = `<span style="color:var(--muted);">Видео пока недоступно.</span>`;
+    return;
+  }
+
+  const trimmed = rawContent.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    const iframe = document.createElement('iframe');
+    iframe.src = trimmed;
+    iframe.title = episodeTitle || 'Плеер';
+    iframe.allow = "autoplay; fullscreen; picture-in-picture";
+    iframe.allowFullscreen = true;
+    playerEmbed.appendChild(iframe);
+  } else if (trimmed.startsWith('<iframe')) {
+    const parser = new DOMParser();
+    const docParsed = parser.parseFromString(trimmed, 'text/html');
+    const srcIframe = docParsed.querySelector('iframe');
+    if (srcIframe && srcIframe.src) {
+      const iframe = document.createElement('iframe');
+      iframe.src = srcIframe.src;
+      iframe.title = episodeTitle || 'Плеер';
+      iframe.allow = "autoplay; fullscreen; picture-in-picture";
+      iframe.allowFullscreen = true;
+      playerEmbed.appendChild(iframe);
+    } else {
+      playerEmbed.innerHTML = trimmed;
+    }
+  } else {
+    playerEmbed.innerHTML = trimmed;
+  }
+}
+
 function loadEpisode(idx, shouldScroll = false) {
   if (idx < 0 || idx >= episodes.length) return;
   currentIndex = idx;
@@ -445,7 +471,7 @@ function loadEpisode(idx, shouldScroll = false) {
           });
         }
       } else {
-        playerEmbed.innerHTML = ep.players[selectedPlayer];
+        setSafePlayerEmbed(ep.players[selectedPlayer], ep.title);
       }
     }
   }
