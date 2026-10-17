@@ -1,17 +1,5 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw",
-  authDomain: "letovshiyori.firebaseapp.com",
-  projectId: "letovshiyori",
-  storageBucket: "letovshiyori.appspot.com",
-  messagingSenderId: "379203362104",
-  appId: "1:379203362104:web:20235be9bbbbfdbd6df5cd"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from "./firebase.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 const themeBtn = document.getElementById('themeBtn');
 document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
