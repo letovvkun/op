@@ -8,7 +8,7 @@ if (!currentTitleId) {
   window.location.replace('catalog.html');
 }
 
-// Чистая векторная SVG-галочка (не превращается в эмодзи на iOS)
+// Чистая векторная SVG-галочка (не превращается в эмодзи на iOS)[cite: 25]
 const CHECK_ICON_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
 // --- Состояние ---
@@ -78,8 +78,36 @@ function showToast(message) {
   toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
-// --- Неблокирующая отправка телеметрии для Дашборда админки ---
+// --- ОПТИМИЗИРОВАННАЯ ТЕЛЕМЕТРИЯ ---
+let viewTelemetryTimer = null;
+let playerTelemetryTimer = null;
+
 function recordTelemetryEvent(playerKey = null) {
+  if (playerKey) {
+    clearTimeout(playerTelemetryTimer);
+    playerTelemetryTimer = setTimeout(() => {
+      sendTelemetryToFirestore({ playerKey });
+    }, 4000);
+    return;
+  }
+
+  if (currentIndex < 0 || !episodes[currentIndex]) return;
+  const currentEpId = episodes[currentIndex].firestoreId;
+
+  clearTimeout(viewTelemetryTimer);
+
+  const sessionEpKey = `tel_view_${currentEpId}`;
+  if (sessionStorage.getItem(sessionEpKey)) {
+    return;
+  }
+
+  viewTelemetryTimer = setTimeout(() => {
+    sessionStorage.setItem(sessionEpKey, '1');
+    sendTelemetryToFirestore({ isView: true });
+  }, 15000);
+}
+
+function sendTelemetryToFirestore({ isView, playerKey }) {
   try {
     const todayKey = new Date().toISOString().split('T')[0];
     const payload = {
@@ -87,7 +115,8 @@ function recordTelemetryEvent(playerKey = null) {
     };
     if (playerKey) {
       payload.players = { [playerKey]: increment(1) };
-    } else {
+    }
+    if (isView) {
       payload.totalViews = increment(1);
       payload.daily = { [todayKey]: increment(1) };
     }
@@ -95,7 +124,6 @@ function recordTelemetryEvent(playerKey = null) {
   } catch (_) {}
 }
 
-// --- Проверка: доступна ли серия зрителям (фильтр черновиков и отложенных серий) ---
 function isEpisodePublic(ep) {
   if (!ep) return false;
   if (ep.status === 'draft' || ep.isDraft === true) return false;
@@ -424,7 +452,7 @@ function ensureEpisodeVisibleInList(ep) {
   }
 }
 
-// Безопасный рендер видеоплеера (Защита от XSS)
+// Безопасный рендер видеоплеера (Защита от XSS)[cite: 25]
 function setSafePlayerEmbed(rawContent, episodeTitle = '') {
   playerEmbed.innerHTML = '';
   if (!rawContent) {
