@@ -1,5 +1,5 @@
 import { db, analytics } from "./firebase.js";
-import { collection, getDocs, orderBy, query, doc, getDoc, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { collection, getDocs, orderBy, query, doc, getDoc, setDoc, increment, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { logEvent } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
 
 const episodesCollection = collection(db, 'episodes');
@@ -79,6 +79,36 @@ function showToast(message) {
   toast.classList.add('show');
   clearTimeout(toast._hideTimer);
   toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// --- Неблокирующая отправка телеметрии для Дашборда админки ---
+function recordTelemetryEvent(playerKey = null) {
+  try {
+    const todayKey = new Date().toISOString().split('T')[0];
+    const payload = {
+      lastActive: new Date().toISOString()
+    };
+    if (playerKey) {
+      payload.players = { [playerKey]: increment(1) };
+    } else {
+      payload.totalViews = increment(1);
+      payload.daily = { [todayKey]: increment(1) };
+    }
+    setDoc(doc(db, 'settings', 'telemetry'), payload, { merge: true }).catch(() => {});
+  } catch (_) {}
+}
+
+// --- Проверка: доступна ли серия зрителям (фильтр черновиков и отложенных серий) ---
+function isEpisodePublic(ep) {
+  if (!ep) return false;
+  if (ep.status === 'draft' || ep.isDraft === true) return false;
+  if (ep.status === 'scheduled' && ep.publishAt) {
+    const publishTime = new Date(ep.publishAt).getTime();
+    if (!isNaN(publishTime) && publishTime > Date.now()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // --- Быстрый поиск по тайтлам в шапке ---
@@ -333,18 +363,22 @@ async function loadEpisodes() {
   renderSkeletons();
 
   try {
+    let rawEpisodes = [];
     const cached = sessionStorage.getItem('mainEpisodes');
     if (cached) {
-      episodes = JSON.parse(cached);
+      rawEpisodes = JSON.parse(cached);
     } else {
       const q = query(episodesCollection, orderBy("id", "desc"), limit(150));
       const snap = await getDocs(q);
-      episodes = snap.docs
+      rawEpisodes = snap.docs
         .map(d => ({ firestoreId: d.id, ...d.data() }))
         .filter(ep => !ep.titleId || ep.titleId === 'one_piece');
 
-      sessionStorage.setItem('mainEpisodes', JSON.stringify(episodes));
+      sessionStorage.setItem('mainEpisodes', JSON.stringify(rawEpisodes));
     }
+
+    // Отсеиваем черновики и серии, время открытия которых по таймеру ещё не наступило
+    episodes = rawEpisodes.filter(isEpisodePublic);
 
     sortEpisodes();
 
@@ -528,6 +562,7 @@ function loadEpisode(idx, shouldScroll = false) {
   document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
 
   ensureEpisodeVisibleInList(ep);
+  recordTelemetryEvent();
 
   if (playerSourceSelect) {
     playerSourceSelect.innerHTML = '';
@@ -627,6 +662,7 @@ if (playerSourceSelect) {
     const newPlayer = playerSourceSelect.value;
     localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer);
     logEvent(analytics, 'select_player', { player_name: newPlayer });
+    recordTelemetryEvent(newPlayer);
     if (currentIndex !== -1) loadEpisode(currentIndex);
   });
 }
