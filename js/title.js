@@ -1,5 +1,5 @@
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { collection, getDocs, doc, getDoc, setDoc, increment, query, where } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 const urlParams = new URLSearchParams(window.location.search);
 const currentTitleId = urlParams.get('id');
@@ -76,6 +76,36 @@ function showToast(message) {
   toast.classList.add('show');
   clearTimeout(toast._hideTimer);
   toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+// --- Неблокирующая отправка телеметрии для Дашборда админки ---
+function recordTelemetryEvent(playerKey = null) {
+  try {
+    const todayKey = new Date().toISOString().split('T')[0];
+    const payload = {
+      lastActive: new Date().toISOString()
+    };
+    if (playerKey) {
+      payload.players = { [playerKey]: increment(1) };
+    } else {
+      payload.totalViews = increment(1);
+      payload.daily = { [todayKey]: increment(1) };
+    }
+    setDoc(doc(db, 'settings', 'telemetry'), payload, { merge: true }).catch(() => {});
+  } catch (_) {}
+}
+
+// --- Проверка: доступна ли серия зрителям (фильтр черновиков и отложенных серий) ---
+function isEpisodePublic(ep) {
+  if (!ep) return false;
+  if (ep.status === 'draft' || ep.isDraft === true) return false;
+  if (ep.status === 'scheduled' && ep.publishAt) {
+    const publishTime = new Date(ep.publishAt).getTime();
+    if (!isNaN(publishTime) && publishTime > Date.now()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // --- Быстрый поиск по тайтлам в шапке ---
@@ -248,7 +278,10 @@ async function loadEpisodes() {
     const q = query(collection(db, "episodes"), where("titleId", "==", currentTitleId));
     const snap = await getDocs(q);
 
-    episodes = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+    episodes = snap.docs
+      .map(d => ({ firestoreId: d.id, ...d.data() }))
+      .filter(isEpisodePublic);
+
     sortEpisodes();
 
     if (episodes.length > 0) {
@@ -434,6 +467,7 @@ function loadEpisode(idx, shouldScroll = false) {
   localStorage.setItem(LAST_EP_TITLE_KEY, ep.firestoreId);
 
   ensureEpisodeVisibleInList(ep);
+  recordTelemetryEvent();
 
   if (playerSourceSelect) {
     playerSourceSelect.innerHTML = '';
@@ -496,7 +530,9 @@ function markActive() {
 // --- Обработчики ---
 if (playerSourceSelect) {
   playerSourceSelect.addEventListener('change', () => {
-    localStorage.setItem(PLAYER_SOURCE_KEY, playerSourceSelect.value);
+    const newPlayer = playerSourceSelect.value;
+    localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer);
+    recordTelemetryEvent(newPlayer);
     if (currentIndex !== -1) loadEpisode(currentIndex);
   });
 }
