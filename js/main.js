@@ -81,8 +81,38 @@ function showToast(message) {
   toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
-// --- Неблокирующая отправка телеметрии для Дашборда админки ---
+// --- ОПТИМИЗИРОВАННАЯ ТЕЛЕМЕТРИЯ (Защита базы от спама и лимита 1 зап/сек) ---
+let viewTelemetryTimer = null;
+let playerTelemetryTimer = null;
+
 function recordTelemetryEvent(playerKey = null) {
+  // 1. Дебаунс выбора плеера (4 сек): шлем только финально выбранный источник
+  if (playerKey) {
+    clearTimeout(playerTelemetryTimer);
+    playerTelemetryTimer = setTimeout(() => {
+      sendTelemetryToFirestore({ playerKey });
+    }, 4000);
+    return;
+  }
+
+  // 2. Защита от спама сериями и F5: таймер 15 сек реального просмотра + 1 раз за вкладку
+  if (currentIndex < 0 || !episodes[currentIndex]) return;
+  const currentEpId = episodes[currentIndex].firestoreId;
+
+  clearTimeout(viewTelemetryTimer);
+
+  const sessionEpKey = `tel_view_${currentEpId}`;
+  if (sessionStorage.getItem(sessionEpKey)) {
+    return; // Уже засчитано в текущей сессии
+  }
+
+  viewTelemetryTimer = setTimeout(() => {
+    sessionStorage.setItem(sessionEpKey, '1');
+    sendTelemetryToFirestore({ isView: true });
+  }, 15000);
+}
+
+function sendTelemetryToFirestore({ isView, playerKey }) {
   try {
     const todayKey = new Date().toISOString().split('T')[0];
     const payload = {
@@ -90,7 +120,8 @@ function recordTelemetryEvent(playerKey = null) {
     };
     if (playerKey) {
       payload.players = { [playerKey]: increment(1) };
-    } else {
+    }
+    if (isView) {
       payload.totalViews = increment(1);
       payload.daily = { [todayKey]: increment(1) };
     }
@@ -247,7 +278,7 @@ function markEpisodeWatched(epId, watched = true) {
   }
 }
 
-// --- Лог-пос Таймер ---
+// --- Умный Лог-пос Таймер ---
 function computeNextTargetDate(cfg) {
   const now = new Date();
 
@@ -377,7 +408,7 @@ async function loadEpisodes() {
       sessionStorage.setItem('mainEpisodes', JSON.stringify(rawEpisodes));
     }
 
-    // Отсеиваем черновики и серии, время открытия которых по таймеру ещё не наступило
+    // Фильтруем черновики и отложенные серии
     episodes = rawEpisodes.filter(isEpisodePublic);
 
     sortEpisodes();
@@ -518,7 +549,7 @@ function ensureEpisodeVisibleInList(ep) {
   }
 }
 
-// Безопасный рендер видеоплеера (Защита от XSS)
+// Безопасный рендер видеоплеера (Защита от XSS)[cite: 27]
 function setSafePlayerEmbed(rawContent, episodeTitle = '') {
   playerEmbed.innerHTML = '';
   if (!rawContent) {
@@ -562,7 +593,7 @@ function loadEpisode(idx, shouldScroll = false) {
   document.title = `EP ${ep.id} — ${ep.title} | Ван-Пис в озвучке Макс Летов & ShiYori`;
 
   ensureEpisodeVisibleInList(ep);
-  recordTelemetryEvent();
+  recordTelemetryEvent(); // Запускает безопасный подсчет (15 сек таймер)
 
   if (playerSourceSelect) {
     playerSourceSelect.innerHTML = '';
@@ -662,7 +693,7 @@ if (playerSourceSelect) {
     const newPlayer = playerSourceSelect.value;
     localStorage.setItem(PLAYER_SOURCE_KEY, newPlayer);
     logEvent(analytics, 'select_player', { player_name: newPlayer });
-    recordTelemetryEvent(newPlayer);
+    recordTelemetryEvent(newPlayer); // Защищённый дебаунс выбора источника
     if (currentIndex !== -1) loadEpisode(currentIndex);
   });
 }
