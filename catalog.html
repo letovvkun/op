@@ -4,15 +4,14 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Каталог тайтлов | Макс Летов &amp; ShiYori</title>
+  <link rel="canonical" href="https://letovshiyori.org/catalog.html">
   <meta name="description" content="Каталог всех аниме-тайтлов в русской озвучке от дуэта Макс Летов &amp; ShiYori.">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 
   <style>
-    .wrap { max-width: 1420px !important; }
-    .site-footer .js-themable-icon { transition: filter 0.3s ease; }
-    body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
+    .wrap { max-width: 1420px; }
 
     .catalog-layout {
       display: flex;
@@ -219,7 +218,7 @@
       align-items: center;
       justify-content: center;
       background: var(--bg-1);
-      transition: all 0.18s ease;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
       flex-shrink: 0;
     }
 
@@ -265,15 +264,16 @@
       .catalog-sidebar {
         position: fixed;
         top: 0;
-        right: -100%;
+        right: 0;
         width: 310px;
         max-width: 85vw;
         height: 100dvh;
         z-index: 9999;
-        transition: right 0.3s var(--ease-out);
+        transform: translateX(100%);
+        transition: transform 0.3s var(--ease-out);
         margin: 0;
       }
-      .catalog-sidebar.open { right: 0; }
+      .catalog-sidebar.open { transform: translateX(0); }
       .filter-box {
         height: 100%;
         border-radius: 20px 0 0 20px;
@@ -295,7 +295,7 @@
 <body data-theme="dark">
 
   <div class="floating-nav">
-    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню">
+    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню" aria-controls="floatingMenu" aria-expanded="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="12" x2="21" y2="12"></line>
         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -340,7 +340,7 @@
     <header class="top">
       <div class="brand">
         <a href="index.html" class="logo-badge" title="На главную">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип" decoding="async">
         </a>
         <div class="title">
           <h1>Каталог тайтлов</h1>
@@ -348,7 +348,7 @@
         </div>
       </div>
       <div class="controls-top">
-        <button id="mobileFilterBtn" class="btn special-btn" type="button">
+        <button id="mobileFilterBtn" class="btn special-btn" type="button" aria-controls="catalogSidebar" aria-expanded="false">
           Фильтры
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         </button>
@@ -362,8 +362,13 @@
 
     <div class="catalog-layout">
       <main class="catalog-main">
-        <div class="catalog-grid" id="catalogGrid">
-          <div class="empty-state">Загрузка каталога...</div>
+        <div class="catalog-grid" id="catalogGrid" aria-busy="true">
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
+          <div class="catalog-card catalog-card-skeleton" aria-hidden="true"><div class="catalog-card-img skeleton-loader skeleton-catalog-poster"></div><div class="catalog-card-info"><span class="skeleton-loader skeleton-line skeleton-line--catalog-title"></span></div></div>
         </div>
       </main>
 
@@ -387,15 +392,15 @@
 
           <details class="filter-accordion" open>
             <summary>Жанры</summary>
-            <div class="accordion-content" id="genresContainer">
-              <div style="color: var(--muted); font-size: 13px; margin-top: 10px;">Загрузка...</div>
+            <div class="accordion-content" id="genresContainer" aria-busy="true">
+              <span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span><span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span><span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span>
             </div>
           </details>
 
           <div class="filter-section">
             <h4>Кто озвучивал</h4>
-            <div id="voiceContainer">
-              <div style="color: var(--muted); font-size: 13px;">Загрузка...</div>
+            <div id="voiceContainer" aria-busy="true">
+              <span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span><span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span><span class="skeleton-loader skeleton-line skeleton-line--filter" aria-hidden="true"></span>
             </div>
           </div>
         </div>
@@ -407,16 +412,16 @@
     <div class="footer-content">
       <div class="footer-socials">
         <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.youtube.com/@max.letovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="YouTube">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
       </div>
       <p class="footer-text">
@@ -426,6 +431,6 @@
     </div>
   </footer>
 
-  <script type="module" src="js/catalog.js"></script>
+  <script type="module" src="js/pages/catalog.js"></script>
 </body>
 </html>

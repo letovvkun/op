@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>404: Страница не найдена</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:," />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -15,7 +16,6 @@
     --accent-a: #444;
     --accent-b: #222;
     --accent-c: #ffb86b;
-    --radius: 16px;
     --component-bg: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
     --component-border: rgba(255,255,255,0.04);
     --component-shadow: 0 10px 30px rgba(0,0,0,0.25);
@@ -146,7 +146,7 @@
 
     <header class="brand">
         <div class="logo-badge">
-          <img src="https://i.imghippo.com/files/cRpA1183qs.jpg" alt="Логотип">
+          <img src="https://i.imghippo.com/files/cRpA1183qs.jpg" alt="Логотип" decoding="async">
         </div>
     </header>
 
@@ -158,12 +158,6 @@
     </div>
   </div>
 
-<script>
-  // Простой скрипт для установки темы из localStorage
-  document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.body.setAttribute('data-theme', savedTheme);
-  });
-</script>
+<script type="module" src="js/pages/404.js"></script>
 </body>
 </html>

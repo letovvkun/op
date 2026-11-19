@@ -4,12 +4,12 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Торрент-трекер | Макс Летов &amp; ShiYori</title>
+  <link rel="canonical" href="https://letovshiyori.org/tracker.html">
+  <meta name="description" content="Список доступных торрент-раздач серий и сборников озвучки Макс Летов &amp; ShiYori.">
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .site-footer .js-themable-icon { transition: filter 0.3s ease; }
-    body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
 
     .tracker-toolbar {
       display: flex;
@@ -207,7 +207,6 @@
       .tracker-table td {
         padding: 0;
         border: none;
-        text-align: left !important;
       }
       .tracker-table td:nth-child(1) { margin-bottom: 8px; }
       .tracker-table td:nth-child(2) { margin-bottom: 4px; }
@@ -220,7 +219,7 @@
 <body data-theme="dark">
 
   <div class="floating-nav">
-    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню">
+    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню" aria-controls="floatingMenu" aria-expanded="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="12" x2="21" y2="12"></line>
         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -263,7 +262,7 @@
     <header class="top">
       <div class="brand">
         <a href="index.html" class="logo-badge" title="На главную">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип" decoding="async">
         </a>
         <div class="title">
           <h1>Торрент-трекер</h1>
@@ -307,8 +306,11 @@
               <th style="width: 220px; text-align: right;">Скачать</th>
             </tr>
           </thead>
-          <tbody id="trackerTableBody">
-            <tr><td colspan="4" class="empty-state">Загрузка раздач...</td></tr>
+          <tbody id="trackerTableBody" aria-busy="true">
+            <tr class="tracker-skeleton-row" aria-hidden="true"><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--type"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--title"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--date"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--download"></span></td></tr>
+            <tr class="tracker-skeleton-row" aria-hidden="true"><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--type"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--title"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--date"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--download"></span></td></tr>
+            <tr class="tracker-skeleton-row" aria-hidden="true"><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--type"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--title"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--date"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--download"></span></td></tr>
+            <tr class="tracker-skeleton-row" aria-hidden="true"><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--type"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--title"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--date"></span></td><td><span class="skeleton-loader skeleton-table-cell skeleton-table-cell--download"></span></td></tr>
           </tbody>
         </table>
       </div>
@@ -319,16 +321,16 @@
     <div class="footer-content">
       <div class="footer-socials">
         <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.youtube.com/@max.letovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="YouTube">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
       </div>
       <p class="footer-text">
@@ -338,174 +340,6 @@
     </div>
   </footer>
 
-  <script type="module">
-    import { db } from "./js/firebase.js";
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-    const themeBtn = document.getElementById('themeBtn');
-    document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
-    if (themeBtn) {
-      themeBtn.addEventListener('click', () => {
-        const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-      });
-    }
-
-    function showToast(message) {
-      let toast = document.querySelector('.toast-notification');
-      if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        document.body.appendChild(toast);
-      }
-      toast.textContent = message;
-      toast.classList.add('show');
-      clearTimeout(toast._hideTimer);
-      toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 2500);
-    }
-
-    const iconPack = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
-    const iconEpisode = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
-    const iconTorrent = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
-    const iconMagnet = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15-4-4 6.75-6.77a7.79 7.79 0 0 1 11 11L13 22l-4-4 6.39-6.36a2.14 2.14 0 0 0-3-3L6 15"></path></svg>`;
-
-    let allTorrents = [];
-    const tableBody = document.getElementById('trackerTableBody');
-    const filterType = document.getElementById('filterType');
-    const sortOrder = document.getElementById('sortOrder');
-
-    async function loadTrackerData() {
-      try {
-        const cached = sessionStorage.getItem('trackerData');
-        if (cached) {
-          allTorrents = JSON.parse(cached);
-          applyFiltersAndRender();
-          return;
-        }
-
-        const [packsSnapshot, epSnapshot] = await Promise.all([
-          getDocs(collection(db, "torrent_packs")),
-          getDocs(collection(db, "episodes"))
-        ]);
-
-        const list = [];
-
-        packsSnapshot.forEach(docSnap => {
-          const pack = docSnap.data();
-          if (pack.magnet || pack.torrentUrl) {
-            const timestamp = pack.createdAt ? new Date(pack.createdAt).getTime() : 0;
-            const dateStr = pack.createdAt ? pack.createdAt.split('T')[0] : 'Неизвестно';
-            list.push({
-              id: docSnap.id,
-              type: 'pack',
-              title: pack.title,
-              dateStr,
-              timestamp,
-              magnet: pack.magnet,
-              torrentUrl: pack.torrentUrl
-            });
-          }
-        });
-
-        epSnapshot.forEach(docSnap => {
-          const ep = docSnap.data();
-          if (ep.magnet || ep.torrentUrl) {
-            const timestamp = ep.date ? new Date(ep.date).getTime() : 0;
-            list.push({
-              id: ep.id,
-              type: 'episode',
-              title: `Серия ${ep.id} — ${ep.title} [${ep.quality || '1080p'}]`,
-              dateStr: ep.date || 'Неизвестно',
-              timestamp,
-              magnet: ep.magnet,
-              torrentUrl: ep.torrentUrl
-            });
-          }
-        });
-
-        allTorrents = list;
-        sessionStorage.setItem('trackerData', JSON.stringify(allTorrents));
-        applyFiltersAndRender();
-      } catch (error) {
-        console.error("Ошибка загрузки трекера:", error);
-        tableBody.innerHTML = '<tr><td colspan="4" class="empty-state" style="color:var(--error);">Ошибка загрузки данных.</td></tr>';
-      }
-    }
-
-    function applyFiltersAndRender() {
-      let filtered = [...allTorrents];
-
-      const currentFilter = filterType.value;
-      if (currentFilter !== 'all') {
-        filtered = filtered.filter(item => item.type === currentFilter);
-      }
-
-      const currentSort = sortOrder.value;
-      filtered.sort((a, b) => currentSort === 'desc' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp);
-
-      renderTable(filtered);
-    }
-
-    function renderTable(data) {
-      if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="empty-state">Раздач по вашему запросу не найдено.</td></tr>';
-        return;
-      }
-
-      tableBody.innerHTML = data.map(item => {
-        const badgeHtml = item.type === 'pack'
-          ? `<span class="badge pack">${iconPack} ПАК</span>`
-          : `<span class="badge episode">${iconEpisode} СЕРИЯ</span>`;
-
-        let linksHtml = '';
-        if (item.torrentUrl) {
-          linksHtml += `<a href="${item.torrentUrl}" target="_blank" rel="noopener noreferrer" class="dl-btn torrent" title="Скачать .torrent файл">${iconTorrent} .torrent</a>`;
-        }
-        if (item.magnet) {
-          linksHtml += `<a href="${item.magnet}" class="dl-btn magnet" title="Открыть Magnet-ссылку">${iconMagnet} Magnet</a>`;
-        }
-
-        return `
-          <tr>
-            <td style="text-align: center;">${badgeHtml}</td>
-            <td><div class="item-title">${item.title}</div></td>
-            <td><div class="item-date">${item.dateStr}</div></td>
-            <td><div class="dl-links">${linksHtml}</div></td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    tableBody.addEventListener('click', (e) => {
-      const magnetBtn = e.target.closest('a.dl-btn.magnet');
-      if (magnetBtn && navigator.clipboard) {
-        navigator.clipboard.writeText(magnetBtn.href).then(() => {
-          showToast('Magnet-ссылка скопирована!');
-        }).catch(() => {});
-      }
-    });
-
-    filterType.addEventListener('change', applyFiltersAndRender);
-    sortOrder.addEventListener('change', applyFiltersAndRender);
-
-    const floatingMenuBtn = document.getElementById('floatingMenuBtn');
-    const floatingMenu = document.getElementById('floatingMenu');
-    if (floatingMenuBtn && floatingMenu) {
-      floatingMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        floatingMenu.classList.toggle('active');
-        floatingMenuBtn.classList.toggle('is-open');
-      });
-      document.addEventListener('click', (e) => {
-        if (!floatingMenu.contains(e.target) && e.target !== floatingMenuBtn) {
-          floatingMenu.classList.remove('active');
-          floatingMenuBtn.classList.remove('is-open');
-        }
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', loadTrackerData);
-  </script>
+  <script type="module" src="js/pages/tracker.js"></script>
 </body>
 </html>

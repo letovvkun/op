@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Загрузка... | Макс Летов &amp; ShiYori</title>
+  <title>Тайтл | Макс Летов &amp; ShiYori</title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <link rel="stylesheet" href="css/style.css">
 
   <style>
@@ -16,8 +15,6 @@
       --plyr-border-radius: 10px;
     }
     .plyr { width: 100%; height: 100%; border-radius: 10px; }
-    .site-footer .js-themable-icon { transition: filter 0.3s ease; }
-    body[data-theme="dark"] .site-footer .js-themable-icon { filter: invert(1); }
 
     .title-header-wrapper {
       display: flex;
@@ -83,7 +80,7 @@
 <body data-theme="dark">
 
   <div class="floating-nav">
-    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню">
+    <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню" aria-controls="floatingMenu" aria-expanded="false">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="12" x2="21" y2="12"></line>
         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -126,16 +123,16 @@
     <header class="top">
       <div class="brand">
         <a href="catalog.html" class="logo-badge" title="В каталог">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип" decoding="async">
         </a>
         <div class="title">
-          <h1 id="headerTitleName">Загрузка...</h1>
+          <h1 id="headerTitleName" aria-busy="true"><span class="skeleton-loader skeleton-line skeleton-line--title-detail" aria-hidden="true"></span></h1>
           <p id="headerSubText">В озвучке Макс Летов &amp; ShiYori</p>
         </div>
       </div>
       <div class="controls-top">
         <div class="bounty-badge" title="Твоя награда за голову">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/Berrysymbol.svg.webp" alt="B">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/Berrysymbol.svg.webp" alt="B" decoding="async">
           <span id="bountyAmount">0</span>
           <span class="currency-symbol">-</span>
         </div>
@@ -160,9 +157,7 @@
               </svg>
               <input id="quickTitleInput" type="text" placeholder="Найти аниме..." autocomplete="off" aria-label="Введите название тайтла">
             </div>
-            <div id="quickTitleResults" class="title-search-results">
-              <div class="title-search-empty">Загрузка списка...</div>
-            </div>
+            <div id="quickTitleResults" class="title-search-results" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -172,11 +167,11 @@
       <div class="player-card" role="region" aria-label="Плеер">
         <div>
           <div class="player-wrap">
-            <div id="playerEmbed" class="embed" aria-live="polite"></div>
+            <div id="playerEmbed" class="embed" aria-live="polite" aria-busy="true"><div class="skeleton-loader skeleton-player-frame" aria-hidden="true"></div></div>
           </div>
           <div id="player-controls">
             <div>
-              <div id="playerTitle" class="player-title">Загрузка видео...</div>
+              <div id="playerTitle" class="player-title" aria-busy="true"><span class="skeleton-loader skeleton-line skeleton-line--title" aria-hidden="true"></span></div>
               <div id="playerSub" class="player-sub">—</div>
             </div>
             <div style="display:flex;gap:8px;align-items:center">
@@ -188,10 +183,9 @@
 
         <div class="player-select-wrapper">
           <label for="playerSource">Источник видео:</label>
-          <div class="custom-select">
-            <select id="playerSource" name="playerSource">
-              <option value="">Загрузка...</option>
-            </select>
+          <div class="custom-select player-source-select">
+            <select id="playerSource" name="playerSource" disabled aria-busy="true"></select>
+              <span class="player-source-skeleton" aria-hidden="true"><span class="skeleton-loader"></span></span>
           </div>
         </div>
       </div>
@@ -202,15 +196,21 @@
             <img id="titlePosterImg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Постер">
           </div>
           <div class="title-info-compact">
-            <h3 id="sidebarTitleName">Загрузка...</h3>
+            <h3 id="sidebarTitleName" aria-busy="true"><span class="skeleton-loader skeleton-line skeleton-line--sidebar-title" aria-hidden="true"></span></h3>
             <div class="title-meta-tags">
-              <div class="meta-tag"><strong style="color: var(--accent-c);">Жанры:</strong> <span id="titleGenresInfo">...</span></div>
-              <div class="meta-tag"><strong style="color: var(--accent-c);">Озвучка:</strong> <span id="titleVoiceInfo">...</span></div>
+              <div class="meta-tag"><strong style="color: var(--accent-c);">Жанры:</strong> <span id="titleGenresInfo" aria-busy="true"><span class="skeleton-loader skeleton-line skeleton-line--meta" aria-hidden="true"></span></span></div>
+              <div class="meta-tag"><strong style="color: var(--accent-c);">Озвучка:</strong> <span id="titleVoiceInfo" aria-busy="true"><span class="skeleton-loader skeleton-line skeleton-line--meta" aria-hidden="true"></span></span></div>
             </div>
           </div>
         </div>
 
-        <div class="title-desc-text" id="titleDescInfo">Загрузка описания...</div>
+        <div class="title-desc-text" id="titleDescInfo" aria-busy="true">
+          <span class="title-description-skeleton" aria-hidden="true">
+            <span class="skeleton-loader skeleton-line skeleton-line--description-wide"></span>
+            <span class="skeleton-loader skeleton-line skeleton-line--description-medium"></span>
+            <span class="skeleton-loader skeleton-line skeleton-line--description-short"></span>
+          </span>
+        </div>
 
         <div class="nav-row" style="margin-top: auto;">
           <button type="button" class="pill" id="shareBtn" style="width: 100%;">
@@ -232,7 +232,12 @@
             </select>
           </div>
         </div>
-        <div class="episodes-grid" id="episodesGrid" aria-live="polite"></div>
+        <div class="episodes-grid" id="episodesGrid" aria-live="polite" aria-busy="true">
+          <div class="ep ep-skeleton" aria-hidden="true"><div class="thumb skeleton-loader skeleton-episode-thumb"></div><div class="meta"><span class="skeleton-loader skeleton-line skeleton-line--episode-title"></span><span class="skeleton-loader skeleton-line skeleton-line--episode-subtitle"></span></div></div>
+          <div class="ep ep-skeleton" aria-hidden="true"><div class="thumb skeleton-loader skeleton-episode-thumb"></div><div class="meta"><span class="skeleton-loader skeleton-line skeleton-line--episode-title"></span><span class="skeleton-loader skeleton-line skeleton-line--episode-subtitle"></span></div></div>
+          <div class="ep ep-skeleton" aria-hidden="true"><div class="thumb skeleton-loader skeleton-episode-thumb"></div><div class="meta"><span class="skeleton-loader skeleton-line skeleton-line--episode-title"></span><span class="skeleton-loader skeleton-line skeleton-line--episode-subtitle"></span></div></div>
+          <div class="ep ep-skeleton" aria-hidden="true"><div class="thumb skeleton-loader skeleton-episode-thumb"></div><div class="meta"><span class="skeleton-loader skeleton-line skeleton-line--episode-title"></span><span class="skeleton-loader skeleton-line skeleton-line--episode-subtitle"></span></div></div>
+        </div>
 
         <div id="loadMoreContainer" style="display: none; flex-direction: column; align-items: center; gap: 8px;">
           <button id="loadMoreBtn" class="btn ghost" type="button" title="Показать/скрыть серии">
@@ -251,16 +256,16 @@
     <div class="footer-content">
       <div class="footer-socials">
         <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="Telegram">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/telegram.svg" alt="Telegram" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://boosty.to/maxletovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="Boosty">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/boosty.webp" alt="Boosty" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.youtube.com/@max.letovv" target="_blank" rel="noopener noreferrer" class="social-icon" title="YouTube">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/youtube.svg" alt="YouTube" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
         <a href="https://www.tiktok.com/@max.letovv_dub" target="_blank" rel="noopener noreferrer" class="social-icon" title="TikTok">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/tiktok.svg" alt="TikTok" class="js-themable-icon" loading="lazy" decoding="async" width="22" height="22">
         </a>
       </div>
       <p class="footer-text">
@@ -274,7 +279,6 @@
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
   </button>
 
-  <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-  <script type="module" src="js/title.js"></script>
+  <script type="module" src="js/pages/title.js"></script>
 </body>
 </html>
