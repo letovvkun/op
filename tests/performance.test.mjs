@@ -180,3 +180,22 @@ test('main and title pages share one episode browser instead of duplicating list
   assert.match(title, /navigator\.share/);
   assert.match(main, /trackPlayerSelection/);
 });
+
+
+test('LCP banner is explicitly preloaded at high priority on pages that use it', () => {
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
+    const html = read(page);
+    assert.match(html, /<link\s+rel="preload"\s+as="image"[^>]*background\.webp[^>]*fetchpriority="high"/,
+      `${page} should preload its shared CSS banner image at high priority`);
+  }
+});
+
+test('Google Fonts stylesheets are loaded asynchronously with a no-script fallback', () => {
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html', 'game.html', '404.html']) {
+    const html = read(page);
+    assert.match(html, /<link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+" rel="stylesheet" media="print" onload="this\.media='all'">/,
+      `${page} should not make Google Fonts CSS render-blocking`);
+    assert.match(html, /<noscript><link href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+" rel="stylesheet"><\/noscript>/,
+      `${page} should retain Google Fonts when JavaScript is disabled`);
+  }
+});
