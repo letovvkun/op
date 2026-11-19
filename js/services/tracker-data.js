@@ -1,4 +1,4 @@
-import { db, collection, getDocs } from '../core/firebase.js';
+import { getFirestoreSdk } from '../core/firebase.js';
 import { toTimestampMillis } from '../core/safe-dom.js';
 import { loadCachedResource, invalidateCachedResource } from '../core/data-cache.js';
 
@@ -6,6 +6,7 @@ const TRACKER_CACHE_KEY = 'trackerData';
 
 export function loadTrackerEntries({ forceRefresh = false } = {}) {
   return loadCachedResource(TRACKER_CACHE_KEY, async () => {
+    const { db, collection, getDocs } = await getFirestoreSdk();
     const [packsSnapshot, episodesSnapshot] = await Promise.all([
       getDocs(collection(db, 'torrent_packs')),
       getDocs(collection(db, 'episodes'))

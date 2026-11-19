@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/background.webp" fetchpriority="high">
 
   <meta property="og:type" content="website">
@@ -31,14 +32,46 @@
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="css/style.css">
 
-  <script type="text/javascript">
-    (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=103823334', 'ym');
-    ym(103823334, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+  <script>
+    (function (windowRef, documentRef) {
+      var scriptUrl = 'https://mc.yandex.ru/metrika/tag.js?id=103823334';
+      var isLoading = false;
+      windowRef.ym = windowRef.ym || function () {
+        (windowRef.ym.a = windowRef.ym.a || []).push(arguments);
+      };
+      windowRef.ym.l = windowRef.ym.l || Date.now();
+
+      function loadMetrika() {
+        if (isLoading || documentRef.querySelector('script[src="' + scriptUrl + '"]')) return;
+        isLoading = true;
+        var script = documentRef.createElement('script');
+        script.async = true;
+        script.src = scriptUrl;
+        var firstScript = documentRef.getElementsByTagName('script')[0];
+        if (firstScript && firstScript.parentNode) {
+          firstScript.parentNode.insertBefore(script, firstScript);
+        } else {
+          documentRef.head.appendChild(script);
+        }
+      }
+
+      function scheduleMetrika() {
+        if (typeof windowRef.requestIdleCallback === 'function') {
+          windowRef.requestIdleCallback(loadMetrika, { timeout: 4000 });
+        } else {
+          windowRef.setTimeout(loadMetrika, 1500);
+        }
+      }
+
+      if (documentRef.readyState === 'complete') scheduleMetrika();
+      else windowRef.addEventListener('load', scheduleMetrika, { once: true });
+
+      // If a visitor interacts immediately, begin loading the counter after that action.
+      ['pointerdown', 'keydown', 'touchstart'].forEach(function (eventName) {
+        windowRef.addEventListener(eventName, loadMetrika, { once: true, passive: true });
+      });
+    })(window, document);
+    window.ym(103823334, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
   </script>
 
   <style>
@@ -52,6 +85,8 @@
 </head>
 <body data-theme="dark">
   <noscript><div><img src="https://mc.yandex.ru/watch/103823334" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+
+  <div class="site-banner" role="banner"><img class="site-banner__image" src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/background.webp" width="1000" height="562" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="sync"></div>
 
   <div class="floating-nav">
     <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню" aria-controls="floatingMenu" aria-expanded="false">
@@ -81,7 +116,6 @@
     </div>
   </div>
 
-  <div class="site-banner" role="banner"></div>
 
   <nav class="social-links-bar" aria-label="Социальные сети">
     <a href="https://t.me/maxletovv_dub" target="_blank" rel="noopener noreferrer" class="btn">Telegram</a>
@@ -95,7 +129,7 @@
     <header class="top">
       <div class="brand">
         <div class="logo-badge">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип" width="320" height="320" decoding="async">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/logo.webp" alt="Логотип" width="44" height="44" decoding="async">
         </div>
         <div class="title">
           <h1>Ван-Пис в озвучке Макс Летов &amp; ShiYori</h1>
@@ -104,7 +138,7 @@
       </div>
       <div class="controls-top">
         <div class="bounty-badge" title="Твоя награда за голову">
-          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/Berrysymbol.svg.webp" alt="B" decoding="async">
+          <img src="https://cdn.jsdelivr.net/gh/l3towm-byte/image/site/Berrysymbol.svg.webp" alt="B" width="15" height="15" decoding="async">
           <span id="bountyAmount">0</span>
           <span class="currency-symbol">-</span>
         </div>

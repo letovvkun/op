@@ -1,11 +1,12 @@
-import { db, doc, increment, setDoc, logAnalyticsEvent } from '../core/firebase.js';
+import { getFirestoreSdk, logAnalyticsEvent } from '../core/firebase.js';
 import { readStorage, writeStorage } from '../core/storage.js';
 
 const VIEW_DELAY_MS = 15000;
 const PLAYER_CHANGE_DELAY_MS = 4000;
 
-function sendTelemetry({ isView = false, playerKey = null } = {}) {
+async function sendTelemetry({ isView = false, playerKey = null } = {}) {
   try {
+    const { db, doc, increment, setDoc } = await getFirestoreSdk();
     const now = new Date();
     const payload = { lastActive: now.toISOString() };
 

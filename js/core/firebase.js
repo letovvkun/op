@@ -1,30 +1,4 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  increment,
-  limit,
-  orderBy,
-  query,
-  setDoc,
-  where
-} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-
-export {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  limit,
-  orderBy,
-  query,
-  setDoc,
-  where
-};
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw',
@@ -36,11 +10,24 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+// Firestore is loaded on demand instead of being part of every page's
+// initial module graph. Session-cached pages can avoid downloading it entirely.
+let firestoreSdkPromise = null;
 
-// Аналитика загружается только при первом событии и отдельным динамическим
-// импортом. Если её SDK заблокирован или среда не поддерживается, Firestore
-// и основной интерфейс продолжают работать независимо.
+export function getFirestoreSdk() {
+  if (!firestoreSdkPromise) {
+    firestoreSdkPromise = import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js')
+      .then((sdk) => ({ ...sdk, db: sdk.getFirestore(app) }))
+      .catch((error) => {
+        firestoreSdkPromise = null;
+        throw error;
+      });
+  }
+  return firestoreSdkPromise;
+}
+
+// Firebase Analytics загружается только при первом событии и отдельным
+// динамическим импортом. Если SDK заблокирован, основной интерфейс продолжает работать.
 let analyticsClientPromise = null;
 
 function getAnalyticsClient() {

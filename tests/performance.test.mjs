@@ -199,3 +199,76 @@ test('Google Fonts stylesheets are loaded asynchronously with a no-script fallba
       `${page} should retain Google Fonts when JavaScript is disabled`);
   }
 });
+
+
+test('LCP banner is an early, high-priority HTML image rather than a CSS background', () => {
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
+    const html = read(page);
+    const bodyStart = html.indexOf('<body');
+    const bannerIndex = html.indexOf('class="site-banner"');
+    assert.ok(bannerIndex > bodyStart, `${page} should contain its banner in the body`);
+    assert.ok(bannerIndex - bodyStart < 500, `${page} should expose the banner near the start of the body`);
+    const banner = html.slice(bannerIndex, html.indexOf('</div>', bannerIndex));
+    assert.match(banner, /<img[^>]+background\.webp/);
+    assert.match(banner, /loading="eager"/);
+    assert.match(banner, /fetchpriority="high"/);
+    assert.match(banner, /decoding="sync"/);
+    assert.match(banner, /width="1000"/);
+    assert.match(banner, /height="562"/);
+  }
+
+  const sharedCss = read('css/style.css');
+  assert.match(sharedCss, /\.site-banner__image\s*\{/);
+  assert.doesNotMatch(sharedCss, /\.site-banner\s*\{[^}]*background:\s*url\(/s);
+});
+
+test('Firestore SDK is dynamically imported only when a Firestore operation is needed', () => {
+  const firebase = read('js/core/firebase.js');
+  assert.match(firebase, /export function getFirestoreSdk\(\)/);
+  assert.match(firebase, /import\('https:\/\/www\.gstatic\.com\/firebasejs\/9\.22\.1\/firebase-firestore\.js'\)/);
+  assert.doesNotMatch(firebase, /^import\s+\{[^}]+\}\s+from\s+['"]https:\/\/www\.gstatic\.com\/firebasejs\/9\.22\.1\/firebase-firestore\.js['"]/m);
+
+  for (const service of ['episode-data.js', 'titles.js', 'tracker-data.js', 'site-settings.js', 'telemetry.js']) {
+    const source = read(`js/services/${service}`);
+    assert.match(source, /getFirestoreSdk/);
+  }
+});
+
+test('Yandex Metrika keeps the existing counter but loads after the page load/idle period', () => {
+  const html = read('index.html');
+  assert.match(html, /window\.ym\(103823334, 'init'/);
+  assert.match(html, /webvisor:true/);
+  assert.match(html, /clickmap:true/);
+  assert.match(html, /requestIdleCallback\(loadMetrika, \{ timeout: 4000 \}\)/);
+  assert.match(html, /addEventListener\('load', scheduleMetrika/);
+  assert.doesNotMatch(html, /k=e\.createElement\(t\),a=e\.getElementsByTagName\(t\)\[0\],k\.async=1/);
+});
+
+test('small header logos and berry symbols reserve their rendered dimensions', () => {
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
+    const html = read(page);
+    for (const match of html.matchAll(/<img[^>]+(?:logo\.webp|Berrysymbol\.svg\.webp)[^>]*>/g)) {
+      assert.match(match[0], /width="(?:44|15)"/);
+      assert.match(match[0], /height="(?:44|15)"/);
+    }
+  }
+});
+
+
+test('skeleton shimmer animates transform instead of repainting background-position', () => {
+  const sharedCss = read('css/style.css');
+  const skeletonBlock = sharedCss.slice(sharedCss.indexOf('.skeleton-loader {'), sharedCss.indexOf('/* Унифицированные размеры skeleton-placeholder'));
+  assert.match(skeletonBlock, /\.skeleton-loader::after/);
+  assert.match(skeletonBlock, /animation:\s*skeleton-shimmer/);
+  assert.match(skeletonBlock, /@keyframes skeleton-shimmer[\s\S]*transform:\s*translate3d/);
+  assert.doesNotMatch(skeletonBlock, /background-position/);
+});
+
+
+test('shared initial pages preconnect to the image CDN and Firebase module host', () => {
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
+    const html = read(page);
+    assert.match(html, /rel="preconnect" href="https:\/\/cdn\.jsdelivr\.net"/);
+    assert.match(html, /rel="preconnect" href="https:\/\/www\.gstatic\.com" crossorigin/);
+  }
+});

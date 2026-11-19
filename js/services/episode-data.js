@@ -1,4 +1,4 @@
-import { db, collection, doc, getDoc, getDocs, limit, orderBy, query, where } from '../core/firebase.js';
+import { getFirestoreSdk } from '../core/firebase.js';
 import { loadCachedResource, invalidateCachedResource } from '../core/data-cache.js';
 
 const MAIN_EPISODES_CACHE_KEY = 'mainEpisodes';
@@ -12,6 +12,7 @@ function mapEpisodeDocuments(snapshot) {
 
 export function loadMainEpisodes({ forceRefresh = false } = {}) {
   return loadCachedResource(MAIN_EPISODES_CACHE_KEY, async () => {
+    const { db, collection, getDocs, limit, orderBy, query } = await getFirestoreSdk();
     const episodesQuery = query(
       collection(db, 'episodes'),
       orderBy('id', 'desc'),
@@ -29,6 +30,7 @@ export function loadTitleEpisodes(titleId, { forceRefresh = false } = {}) {
 
   const cacheKey = `titleEpisodes:${encodeURIComponent(titleId)}`;
   return loadCachedResource(cacheKey, async () => {
+    const { db, collection, getDocs, query, where } = await getFirestoreSdk();
     const episodesQuery = query(
       collection(db, 'episodes'),
       where('titleId', '==', titleId)
@@ -45,6 +47,7 @@ export function loadTitleRecord(titleId, { forceRefresh = false } = {}) {
 
   const cacheKey = `titleRecord:${encodeURIComponent(titleId)}`;
   return loadCachedResource(cacheKey, async () => {
+    const { db, doc, getDoc } = await getFirestoreSdk();
     const snapshot = await getDoc(doc(db, 'titles', titleId));
     return snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null;
   }, { forceRefresh, validate: (value) => value === null || (typeof value === 'object' && !Array.isArray(value)) });
