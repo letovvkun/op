@@ -48,7 +48,13 @@ export function createEpisodeBrowser({
     if (!grid || currentIndex < 0) return;
     const activeId = episodes[currentIndex]?.firestoreId;
     for (const node of grid.children) {
-      node.classList.toggle('active', node.dataset.firestoreId === activeId);
+      const isActive = node.dataset.firestoreId === activeId;
+      node.classList.toggle('active', isActive);
+      const opener = node.querySelector?.('.ep-open');
+      if (opener) {
+        if (isActive) opener.setAttribute('aria-current', 'true');
+        else opener.removeAttribute('aria-current');
+      }
     }
   }
 
@@ -76,8 +82,6 @@ export function createEpisodeBrowser({
         if (!term && index === 0 && sortOrder === 'desc') card.classList.add('new-episode');
         if (isWatched) card.classList.add('watched');
 
-        card.tabIndex = 0;
-        card.setAttribute('role', 'button');
         card.dataset.firestoreId = episode.firestoreId;
 
         const thumbnailUrl = safeHttpsUrl(episode.thumb);
@@ -91,6 +95,7 @@ export function createEpisodeBrowser({
             <div class="t">${escapeHTML(episode.title)}</div>
             <div class="s">${escapeHTML(episode.date || '')} • ${escapeHTML(episode.quality || '')}</div>
           </div>
+          <button type="button" class="ep-open" aria-label="Смотреть: ${escapeHTML(episode.title)}"></button>
           <button type="button" class="ep-watch-toggle" title="${isWatched ? 'Отметить непросмотренным' : 'Отметить просмотренным'}" aria-label="${isWatched ? 'Отметить непросмотренным' : 'Отметить просмотренным'}" aria-pressed="${isWatched}">${CHECK_ICON_SVG}</button>
         `;
         fragment.appendChild(card);
@@ -194,11 +199,6 @@ export function createEpisodeBrowser({
 
   if (grid) {
     grid.addEventListener('click', handleGridAction);
-    grid.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      handleGridAction(event);
-    });
   }
 
   searchInput?.addEventListener('input', debounce(() => {
@@ -238,13 +238,16 @@ export function createEpisodeBrowser({
     renderList(filter);
   });
 
-  previousButton?.addEventListener('click', () => {
-    if (currentIndex < episodes.length - 1) select(currentIndex + 1, navigationScroll);
-  });
+  // «Назад» ведёт к более ранней серии, «Вперёд» к более поздней при любой сортировке:
+  // при сортировке «сначала новые» ранняя серия лежит правее в списке, при «сначала старые» левее.
+  function stepEpisode(direction) {
+    const olderOffset = sortOrder === 'desc' ? 1 : -1;
+    const target = currentIndex + direction * olderOffset;
+    if (target >= 0 && target < episodes.length) select(target, navigationScroll);
+  }
 
-  nextButton?.addEventListener('click', () => {
-    if (currentIndex > 0) select(currentIndex - 1, navigationScroll);
-  });
+  previousButton?.addEventListener('click', () => stepEpisode(1));
+  nextButton?.addEventListener('click', () => stepEpisode(-1));
 
   return {
     setEpisodes,

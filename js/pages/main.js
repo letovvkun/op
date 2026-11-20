@@ -1,4 +1,4 @@
-import { showToast, initFloatingMenu, initThemeToggle, initSeasonalSnowEffect, initScrollToTop } from '../core/ui.js';
+import { initFloatingMenu, initThemeToggle, initSeasonalSnowEffect, initScrollToTop, initShareButton } from '../core/ui.js';
 import { initLazyQuickTitleSearch } from '../components/lazy-quick-title-search.js';
 import { createLazyGiscusLoader } from '../components/lazy-giscus.js';
 import { isEpisodeDisplayable } from '../services/episodes.js';
@@ -241,31 +241,24 @@ if (playerSourceSelect) {
 
 initScrollToTop();
 
-if (shareBtn) {
-  shareBtn.addEventListener('click', async () => {
-    const shareData = {
-      title: 'Ван-Пис в озвучке Макс Летов & ShiYori',
-      text: 'Смотрю Ван-Пис в новой озвучке!',
-      url: window.location.href
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        showToast('Ссылка на сайт скопирована!');
-      }
-    } catch (err) {}
-  });
-}
-
+initShareButton(shareBtn, () => ({
+  title: 'Ван-Пис в озвучке Макс Летов & ShiYori',
+  text: 'Смотрю Ван-Пис в новой озвучке!',
+  url: window.location.href
+}), 'Ссылка на сайт скопирована!');
 
 if (copyrightModal && closeCopyrightModalBtn) {
   const closeCopy = () => {
     copyrightModal.classList.remove('open');
     copyrightModal.setAttribute('aria-hidden', 'true');
+    document.getElementById('openCopyrightModal')?.focus();
   };
+  const openCopyrightModalBtn = document.getElementById('openCopyrightModal');
+  openCopyrightModalBtn?.addEventListener('click', () => {
+    copyrightModal.classList.add('open');
+    copyrightModal.setAttribute('aria-hidden', 'false');
+    closeCopyrightModalBtn.focus();
+  });
   closeCopyrightModalBtn.addEventListener('click', closeCopy);
   copyrightModal.addEventListener('click', (e) => { if (e.target === copyrightModal) closeCopy(); });
 }

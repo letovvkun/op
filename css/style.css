@@ -27,6 +27,10 @@
   --player-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Высота баннера и то, насколько .wrap заходит на него (margin-top = высота - нахлёст) */
+  --banner-h: 400px;
+  --banner-overlap: 165px;
 }
 
 /* Чистая светлая тема без бежевой дымки */
@@ -104,7 +108,7 @@ body {
 /* --- БАННЕР И СОЦСЕТИ --- */
 .site-banner {
   width: 100%;
-  height: 400px;
+  height: var(--banner-h);
   position: absolute;
   top: 0;
   left: 0;
@@ -171,7 +175,7 @@ body {
 .wrap {
   width: calc(100% - 32px);
   max-width: 1220px;
-  margin: 235px auto 2.5rem;
+  margin: calc(var(--banner-h) - var(--banner-overlap)) auto 2.5rem;
   border-radius: 24px;
   position: relative;
   z-index: 2;
@@ -196,7 +200,6 @@ body {
   width: 80%;
   height: 260px;
   pointer-events: none;
-  filter: blur(48px);
   background: radial-gradient(closest-side, rgba(255, 255, 255, 0.045), transparent 70%);
   border-radius: 40%;
   z-index: 0;
@@ -296,7 +299,6 @@ a.btn {
   font-weight: 600;
   font-size: 13px;
   font-family: inherit;
-  backdrop-filter: blur(8px);
   transition: transform 0.18s var(--ease-out), background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   white-space: nowrap;
 }
@@ -597,7 +599,6 @@ a.btn {
   padding: 7px 13px;
   border-radius: 12px;
   cursor: default;
-  backdrop-filter: blur(8px);
   transition: border-color 0.2s ease, transform 0.2s var(--ease-out);
 }
 
@@ -650,8 +651,6 @@ a.btn {
   background: var(--component-bg);
   border: 1px solid var(--component-border);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   display: block;
 }
 
@@ -766,8 +765,6 @@ a.btn {
   background: var(--component-bg);
   border: 1px solid var(--component-border);
   box-shadow: var(--component-shadow);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   display: block;
 }
 
@@ -862,7 +859,6 @@ a.btn {
   font-size: 14px;
   font-family: inherit;
   outline: none;
-  backdrop-filter: blur(8px);
   transition: border-color 0.2s ease;
 }
 
@@ -896,8 +892,6 @@ a.btn {
   border-radius: 14px;
   background: var(--component-bg);
   border: 1px solid var(--component-border);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   cursor: pointer;
   transition: transform 0.2s var(--ease-out), box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.25s ease;
   animation: ep-fade-in 0.3s var(--ease-out);
@@ -1001,6 +995,25 @@ a.btn {
 }
 
 /* --- SVG-ГАЛОЧКА ОТМЕТКИ ПРОСМОТРА --- */
+.ep-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ep-open:focus-visible {
+  outline: 2px solid var(--accent-c);
+  outline-offset: 2px;
+}
+
 .ep-watch-toggle {
   position: absolute;
   top: 8px;
@@ -1663,21 +1676,24 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
 
 /* --- АДАПТИВНОСТЬ --- */
 @media (max-width: 980px) {
+  :root { --banner-overlap: 185px; }
   .hero { grid-template-columns: 1fr; }
   .meta-card { order: 2; }
   .player-card { order: 1; }
   .social-links-bar { top: 145px; }
-  .wrap { margin-top: 215px; }
 }
 
 @media (max-width: 767px) {
+  :root {
+    --banner-h: 290px;
+    --banner-overlap: 90px;
+  }
   .wrap {
     width: calc(100% - 20px);
     padding: 18px;
-    margin: 200px auto 1.5rem;
+    margin-bottom: 1.5rem;
     border-radius: 20px;
   }
-  .site-banner { height: 290px; }
   .social-links-bar {
     top: 125px;
     max-width: calc(100vw - 24px);
@@ -1746,3 +1762,17 @@ body[data-theme="dark"] .site-footer .js-themable-icon {
     scroll-behavior: auto !important;
   }
 }
+
+/* Ссылка в футере, которая открывает модальное окно для правообладателей */
+.footer-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-c);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.footer-link:hover { color: var(--accent-c-hover); }

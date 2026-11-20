@@ -1,10 +1,16 @@
 # Deploy the static site to GitHub Pages after a JavaScript syntax check.
+# Every run also refreshes data/*.json (episodes, titles, ...) from Firestore, so visitors
+# do not have to read Firestore themselves. See scripts/build-site.mjs.
 name: Deploy static content to Pages
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  # Refresh the data snapshot. Each run reads every document of the episodes/titles/torrent_packs
+  # collections once, so keep the interval in line with the Firestore free quota (50k reads/day).
+  schedule:
+    - cron: "7,37 * * * *"
 
 permissions:
   contents: read
@@ -46,13 +52,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - name: Prepare public site files
-        run: |
-          set -eu
-          mkdir -p _site
-          cp index.html catalog.html title.html tracker.html info.html game.html 404.html _site/
-          cp CNAME robots.txt sitemap.xml veo-veo.txt _site/
-          cp -R css js _site/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build site and data snapshot
+        run: node scripts/build-site.mjs --out _site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

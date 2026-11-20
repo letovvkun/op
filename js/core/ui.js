@@ -132,7 +132,11 @@ export function initSeasonalSnowEffect() {
   wrapper.className = 'snow-wrapper';
   const fragment = document.createDocumentFragment();
 
-  for (let i = 0; i < 45; i++) {
+  // На телефонах и устройствах с малым числом ядер хватает меньшего количества снежинок.
+  const isLightDevice = window.matchMedia?.('(max-width: 767px)').matches || (navigator.hardwareConcurrency || 8) <= 4;
+  const flakeCount = isLightDevice ? 18 : 45;
+
+  for (let i = 0; i < flakeCount; i++) {
     const flake = document.createElement('div');
     flake.className = 'snowflake';
     const size = (Math.random() * 3 + 2).toFixed(1);
@@ -147,6 +151,29 @@ export function initSeasonalSnowEffect() {
 
   wrapper.appendChild(fragment);
   document.body.appendChild(wrapper);
+
+}
+
+/**
+ * Кнопка «Поделиться»: системное окно, если оно есть, иначе копирование ссылки.
+ * getShareData возвращает { title, text?, url }; copiedMessage показывается после копирования.
+ */
+export function initShareButton(button, getShareData, copiedMessage = 'Ссылка скопирована!') {
+  if (!button) return;
+
+  button.addEventListener('click', async () => {
+    const shareData = getShareData();
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.url);
+        showToast(copiedMessage);
+      }
+    } catch (_) {
+      // Пользователь закрыл окно «Поделиться» или буфер обмена недоступен: ничего делать не нужно.
+    }
+  });
 }
 
 export function initDetailsAnimation() {

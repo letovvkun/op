@@ -1,4 +1,6 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+// Firebase SDK подключается только здесь и только по требованию.
+// Главная страница, каталог и страница тайтла читают данные из статических JSON
+// (см. js/core/static-data.js), поэтому Firebase не попадает в критический путь загрузки.
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBE1AkNd3bPGPr3ZPUbtqNUd2WDCB2SHHw',
@@ -9,15 +11,31 @@ const firebaseConfig = {
   appId: '1:379203362104:web:20235be9bbbbfdbd6df5cd'
 };
 
-export const app = initializeApp(firebaseConfig);
-// Firestore is loaded on demand instead of being part of every page's
-// initial module graph. Session-cached pages can avoid downloading it entirely.
+let appPromise = null;
+
+function getFirebaseApp() {
+  if (!appPromise) {
+    appPromise = import('https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js')
+      .then((sdk) => sdk.initializeApp(firebaseConfig))
+      .catch((error) => {
+        appPromise = null;
+        throw error;
+      });
+  }
+  return appPromise;
+}
+
+// Firestore загружается по требованию: страницам, которым хватает статических данных,
+// он не нужен вообще.
 let firestoreSdkPromise = null;
 
 export function getFirestoreSdk() {
   if (!firestoreSdkPromise) {
-    firestoreSdkPromise = import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js')
-      .then((sdk) => ({ ...sdk, db: sdk.getFirestore(app) }))
+    firestoreSdkPromise = Promise.all([
+      getFirebaseApp(),
+      import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js')
+    ])
+      .then(([app, sdk]) => ({ ...sdk, db: sdk.getFirestore(app) }))
       .catch((error) => {
         firestoreSdkPromise = null;
         throw error;
@@ -32,8 +50,11 @@ let analyticsClientPromise = null;
 
 function getAnalyticsClient() {
   if (!analyticsClientPromise) {
-    analyticsClientPromise = import('https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js')
-      .then(async (analyticsSdk) => {
+    analyticsClientPromise = Promise.all([
+      getFirebaseApp(),
+      import('https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js')
+    ])
+      .then(async ([app, analyticsSdk]) => {
         if (!(await analyticsSdk.isSupported())) return null;
         return {
           instance: analyticsSdk.getAnalytics(app),

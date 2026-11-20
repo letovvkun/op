@@ -1,10 +1,9 @@
-import { escapeHTML, safeHttpsUrl } from '../core/safe-dom.js';
+import { NO_POSTER_URL, escapeHTML, safeHttpsUrl } from '../core/safe-dom.js';
 import { debounce } from '../core/ui.js';
 import { loadTitles } from '../services/titles.js';
 import { logDataError } from '../core/errors.js';
 import { clearSkeletonState, createTitleSearchSkeleton, setSkeletonContent } from '../core/skeletons.js';
 
-const FALLBACK_POSTER = 'https://via.placeholder.com/120x180?text=No+Poster';
 const initializedSearchButtons = new WeakSet();
 
 /** Инициализирует поиск тайтлов в шапке. Отдельный экземпляр для каждой страницы. */
@@ -42,8 +41,8 @@ export function initQuickTitleSearch() {
 
     results.innerHTML = filtered.map((title) => {
       const id = String(title.id || '');
-      const href = id === 'one_piece' ? 'index.html' : `title.html?id=${encodeURIComponent(id)}`;
-      const poster = escapeHTML(safeHttpsUrl(title.poster, FALLBACK_POSTER));
+      const href = id === 'one_piece' ? 'index.html' : `title/${encodeURIComponent(id)}/`;
+      const poster = escapeHTML(safeHttpsUrl(title.poster, NO_POSTER_URL));
       const name = escapeHTML(title.name || 'Без названия');
       const meta = escapeHTML(title.genres || 'Аниме');
       return `

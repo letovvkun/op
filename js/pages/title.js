@@ -1,5 +1,5 @@
-import { safeHttpsUrl } from '../core/safe-dom.js';
-import { showToast, initFloatingMenu, initThemeToggle, initScrollToTop } from '../core/ui.js';
+import { NO_POSTER_URL, safeHttpsUrl } from '../core/safe-dom.js';
+import { initFloatingMenu, initThemeToggle, initScrollToTop, initShareButton } from '../core/ui.js';
 import { initLazyQuickTitleSearch } from '../components/lazy-quick-title-search.js';
 import { isEpisodeDisplayable } from '../services/episodes.js';
 import { createWatchedEpisodeManager } from '../components/watched-episodes.js';
@@ -11,7 +11,8 @@ import { getDataErrorMessage, logDataError } from '../core/errors.js';
 import { clearSkeletonState, createDescriptionSkeleton, createEpisodeGridSkeleton, createTextSkeleton, setSkeletonContent } from '../core/skeletons.js';
 
 const urlParams = new URLSearchParams(window.location.search);
-const currentTitleId = urlParams.get('id');
+// Идентификатор берётся из ?id=..., а на готовых страницах /title/<id>/ из meta-тега.
+const currentTitleId = urlParams.get('id') || document.querySelector('meta[name="title-id"]')?.content || null;
 
 if (!currentTitleId) {
   window.location.replace('catalog.html');
@@ -63,7 +64,7 @@ async function loadTitleData() {
 
       if (headerName) { headerName.textContent = data.name; clearSkeletonState(headerName); }
       if (sidebarName) { sidebarName.textContent = data.name; clearSkeletonState(sidebarName); }
-      if (posterImg) posterImg.src = safeHttpsUrl(data.poster, 'https://via.placeholder.com/300x450?text=No+Poster');
+      if (posterImg) posterImg.src = safeHttpsUrl(data.poster, NO_POSTER_URL);
       if (genresInfo) { genresInfo.textContent = data.genres || 'Не указаны'; clearSkeletonState(genresInfo); }
       if (voiceInfo) { voiceInfo.textContent = data.voice || 'Макс Летов & ShiYori'; clearSkeletonState(voiceInfo); }
       if (descInfo) { descInfo.textContent = data.desc || 'Описание отсутствует.'; clearSkeletonState(descInfo); }
@@ -168,18 +169,7 @@ if (playerSourceSelect) {
   });
 }
 
-if (shareBtn) {
-  shareBtn.addEventListener('click', async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: document.title, url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        showToast('Ссылка скопирована!');
-      }
-    } catch (error) {}
-  });
-}
+initShareButton(shareBtn, () => ({ title: document.title, url: window.location.href }));
 
 initScrollToTop();
 

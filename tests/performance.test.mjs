@@ -177,7 +177,9 @@ test('main and title pages share one episode browser instead of duplicating list
 
   assert.match(main, /animatedCollapse:\s*true/);
   assert.match(title, /navigationScroll:\s*true/);
-  assert.match(title, /navigator\.share/);
+  assert.match(title, /initShareButton\(/);
+  assert.match(main, /initShareButton\(/);
+  assert.match(read('js/core/ui.js'), /navigator\.share/);
   assert.match(main, /trackPlayerSelection/);
 });
 
@@ -265,12 +267,22 @@ test('skeleton shimmer animates transform instead of repainting background-posit
 });
 
 
-test('shared initial pages preconnect to the image CDN and Firebase module host', () => {
+test('pages preconnect to the image CDN; only pages that still read Firestore directly preconnect to Firebase', () => {
   for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
     const html = read(page);
     assert.match(html, /rel="preconnect" href="https:\/\/cdn\.jsdelivr\.net"/);
-    assert.match(html, /rel="preconnect" href="https:\/\/www\.gstatic\.com" crossorigin/);
   }
+
+  // Эти страницы читают данные из статических снимков data/*.json, поэтому лишние
+  // соединения с Firebase в начале загрузки им не нужны.
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html']) {
+    const html = read(page);
+    assert.doesNotMatch(html, /rel="preconnect" href="https:\/\/www\.gstatic\.com"/, `${page} should not preconnect to Firebase`);
+    assert.doesNotMatch(html, /firestore\.googleapis\.com/, `${page} should not preconnect to Firestore`);
+  }
+
+  // info.html показывает статус выпуска вживую из Firestore.
+  assert.match(read('info.html'), /rel="preconnect" href="https:\/\/www\.gstatic\.com" crossorigin/);
 });
 
 
@@ -288,12 +300,17 @@ test('quick title search is loaded only after interaction, not in the entrypoint
   assert.match(loader, /addEventListener\('click',[\s\S]*?true\)/);
 });
 
-test('homepage preconnects to Firestore while keeping font stylesheet non-blocking', () => {
+test('homepage keeps non-blocking fonts and Plyr preconnect, and preloads its module graph', () => {
   const html = read('index.html');
-  assert.match(html, /rel="preconnect" href="https:\/\/firestore\.googleapis\.com"/);
   assert.match(html, /rel="dns-prefetch" href="\/\/fonts\.googleapis\.com"/);
   assert.match(html, /fonts\.gstatic\.com/);
   assert.match(html, /rel="preconnect" href="https:\/\/cdn\.plyr\.io"/);
+
+  // modulepreload убирает «лесенку» последовательных запросов модулей.
+  const preloaded = [...html.matchAll(/<link rel="modulepreload" href="(js\/[^"]+)">/g)].map(match => match[1]);
+  for (const module of ['js/services/episode-data.js', 'js/core/static-data.js', 'js/components/episode-browser.js']) {
+    assert.ok(preloaded.includes(module), `${module} should be preloaded`);
+  }
 });
 
 test('site image CDN URLs are pinned to an immutable repository commit', () => {

@@ -4,6 +4,9 @@ import { readStorage, writeStorage, removeStorage } from './storage.js';
  * Общие безопасные DOM- и cache-утилиты.
  * Не вставляйте данные из Firestore в HTML без escapeHTML().
  */
+/** Локальная заглушка для отсутствующих постеров (внешние placeholder-сервисы часто недоступны). */
+export const NO_POSTER_URL = 'img/no-poster.svg';
+
 export function escapeHTML(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',

@@ -1,4 +1,4 @@
-import { escapeHTML, safeHttpsUrl, toTimestampMillis } from '../core/safe-dom.js';
+import { NO_POSTER_URL, escapeHTML, safeHttpsUrl, toTimestampMillis } from '../core/safe-dom.js';
 import { debounce, initFloatingMenu, initThemeToggle } from '../core/ui.js';
 import { loadTitles } from '../services/titles.js';
 import { getDataErrorMessage, logDataError } from '../core/errors.js';
@@ -139,8 +139,8 @@ function renderCatalog() {
   }
 
   catalogGrid.innerHTML = filteredTitles.map(t => {
-    const link = t.id === 'one_piece' ? 'index.html' : `title.html?id=${encodeURIComponent(t.id)}`;
-    const poster = safeHttpsUrl(t.poster, 'https://via.placeholder.com/300x450?text=No+Poster');
+    const link = t.id === 'one_piece' ? 'index.html' : `title/${encodeURIComponent(t.id)}/`;
+    const poster = safeHttpsUrl(t.poster, NO_POSTER_URL);
     const name = escapeHTML(t.name || 'Без названия');
     return `
       <a href="${link}" class="catalog-card">

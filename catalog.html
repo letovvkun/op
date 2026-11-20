@@ -6,9 +6,8 @@
   <title>Каталог тайтлов | Макс Летов &amp; ShiYori</title>
   <link rel="canonical" href="https://letovshiyori.org/catalog.html">
   <meta name="description" content="Каталог всех аниме-тайтлов в русской озвучке от дуэта Макс Летов &amp; ShiYori.">
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10851/10851067.png" type="image/png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preload" as="image" href="https://cdn.jsdelivr.net/gh/l3towm-byte/image@16d8001cfeaaf7e87811f94162c9e3c7986d1c79/site/background.webp" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -299,10 +298,11 @@
   </style>
 </head>
 <body data-theme="dark">
+  <script>try{if(localStorage.getItem('theme')==='light')document.body.setAttribute('data-theme','light')}catch(e){}</script>
 
   
 
-  <div class="site-banner" role="banner"><img class="site-banner__image" src="https://cdn.jsdelivr.net/gh/l3towm-byte/image@16d8001cfeaaf7e87811f94162c9e3c7986d1c79/site/background.webp" width="1000" height="562" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="async"></div>
+  <div class="site-banner" aria-hidden="true"><img class="site-banner__image" src="https://cdn.jsdelivr.net/gh/l3towm-byte/image@16d8001cfeaaf7e87811f94162c9e3c7986d1c79/site/background.webp" width="1000" height="562" alt="" aria-hidden="true" loading="eager" fetchpriority="high" decoding="async"></div>
 
   <div class="floating-nav">
     <button id="floatingMenuBtn" class="btn glass-effect" aria-label="Меню" aria-controls="floatingMenu" aria-expanded="false">
@@ -345,7 +345,7 @@
 
   <div id="filterOverlay" class="mobile-filter-overlay"></div>
 
-  <div class="wrap" role="main">
+  <div class="wrap">
     <header class="top">
       <div class="brand">
         <a href="index.html" class="logo-badge" title="На главную">

@@ -112,12 +112,70 @@ test('shared episode browser sorts once, keeps the selected episode stable after
     assert.equal(browser.currentIndex, 2, 'the current episode must remain selected after reordering');
     assert.deepEqual(selected, ['ep-3'], 'sorting must not restart the player');
 
+    // «Вперёд» ведёт к более поздней серии, «Назад» к более ранней при любой сортировке.
     nextButton.dispatch('click');
+    assert.equal(browser.currentIndex, 2, 'ep-3 is already the newest episode, so «Вперёд» stays put');
+    assert.deepEqual(selected, ['ep-3']);
+    previousButton.dispatch('click');
     assert.equal(browser.currentIndex, 1);
     assert.equal(selected.at(-1), 'ep-2');
-    previousButton.dispatch('click');
+    nextButton.dispatch('click');
     assert.equal(browser.currentIndex, 2);
     assert.equal(selected.at(-1), 'ep-3');
+  });
+});
+
+test('previous/next buttons follow episode numbers in both sort orders', () => {
+  withFakeDocument(() => {
+    const sortSelect = new FakeElement('select');
+    const previousButton = new FakeElement('button');
+    const nextButton = new FakeElement('button');
+    const selected = [];
+    const browser = createEpisodeBrowser({
+      grid: new FakeElement(),
+      sortSelect,
+      previousButton,
+      nextButton,
+      onSelect: episode => selected.push(episode.id)
+    });
+    browser.setEpisodes([
+      { id: 10, firestoreId: 'ep-10', title: 'Ten' },
+      { id: 11, firestoreId: 'ep-11', title: 'Eleven' },
+      { id: 12, firestoreId: 'ep-12', title: 'Twelve' }
+    ]);
+
+    // «Сначала новые»: открыта серия 12.
+    previousButton.dispatch('click');
+    assert.equal(selected.at(-1), 11);
+    previousButton.dispatch('click');
+    assert.equal(selected.at(-1), 10);
+    previousButton.dispatch('click');
+    assert.equal(selected.at(-1), 10, 'нет серии раньше первой');
+    nextButton.dispatch('click');
+    assert.equal(selected.at(-1), 11);
+
+    // «Сначала старые»: те же кнопки ведут к тем же сериям.
+    sortSelect.value = 'asc';
+    sortSelect.dispatch('change');
+    previousButton.dispatch('click');
+    assert.equal(selected.at(-1), 10);
+    nextButton.dispatch('click');
+    assert.equal(selected.at(-1), 11);
+    nextButton.dispatch('click');
+    assert.equal(selected.at(-1), 12);
+    nextButton.dispatch('click');
+    assert.equal(selected.at(-1), 12, 'нет серии позже последней');
+  });
+});
+
+test('episode cards use a real button for opening instead of a div with role=button', () => {
+  withFakeDocument(() => {
+    const grid = new FakeElement();
+    const browser = createEpisodeBrowser({ grid });
+    browser.setEpisodes([{ id: 1, firestoreId: 'ep-1', title: 'First <b>' }]);
+    const [card] = grid.children;
+    assert.equal(card.attributes.has('role'), false);
+    assert.match(card.innerHTML, /<button type="button" class="ep-open" aria-label="Смотреть: First &lt;b&gt;"><\/button>/);
   });
 });
 
