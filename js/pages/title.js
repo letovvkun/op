@@ -1,6 +1,6 @@
 import { safeHttpsUrl } from '../core/safe-dom.js';
 import { showToast, initFloatingMenu, initThemeToggle, initScrollToTop } from '../core/ui.js';
-import { initQuickTitleSearch } from '../components/quick-title-search.js';
+import { initLazyQuickTitleSearch } from '../components/lazy-quick-title-search.js';
 import { isEpisodeDisplayable } from '../services/episodes.js';
 import { createWatchedEpisodeManager } from '../components/watched-episodes.js';
 import { createTelemetryTracker } from '../services/telemetry.js';
@@ -189,6 +189,6 @@ initFloatingMenu();
 document.addEventListener('DOMContentLoaded', () => {
   if (!currentTitleId) return;
   watchedEpisodeManager.load();
-  initQuickTitleSearch();
+  initLazyQuickTitleSearch();
   Promise.all([loadTitleData(), loadEpisodes()]);
 });

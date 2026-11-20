@@ -1,5 +1,5 @@
 import { showToast, initFloatingMenu, initThemeToggle, initSeasonalSnowEffect, initScrollToTop } from '../core/ui.js';
-import { initQuickTitleSearch } from '../components/quick-title-search.js';
+import { initLazyQuickTitleSearch } from '../components/lazy-quick-title-search.js';
 import { createLazyGiscusLoader } from '../components/lazy-giscus.js';
 import { isEpisodeDisplayable } from '../services/episodes.js';
 import { createWatchedEpisodeManager } from '../components/watched-episodes.js';
@@ -307,5 +307,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initLogPoseTimer();
   initSeasonalSnowEffect();
   initChatWidget();
-  initQuickTitleSearch();
+  initLazyQuickTitleSearch();
 });

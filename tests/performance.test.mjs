@@ -212,7 +212,7 @@ test('LCP banner is an early, high-priority HTML image rather than a CSS backgro
     assert.match(banner, /<img[^>]+background\.webp/);
     assert.match(banner, /loading="eager"/);
     assert.match(banner, /fetchpriority="high"/);
-    assert.match(banner, /decoding="sync"/);
+    assert.match(banner, /decoding="async"/);
     assert.match(banner, /width="1000"/);
     assert.match(banner, /height="562"/);
   }
@@ -270,5 +270,37 @@ test('shared initial pages preconnect to the image CDN and Firebase module host'
     const html = read(page);
     assert.match(html, /rel="preconnect" href="https:\/\/cdn\.jsdelivr\.net"/);
     assert.match(html, /rel="preconnect" href="https:\/\/www\.gstatic\.com" crossorigin/);
+  }
+});
+
+
+test('quick title search is loaded only after interaction, not in the entrypoint module graph', () => {
+  for (const page of ['js/pages/main.js', 'js/pages/title.js']) {
+    const source = read(page);
+    assert.match(source, /initLazyQuickTitleSearch/);
+    assert.doesNotMatch(source, /from ['"]\.\.\/components\/quick-title-search\.js['"]/);
+  }
+
+  const loader = read('js/components/lazy-quick-title-search.js');
+  assert.match(loader, /import\(['"]\.\/quick-title-search\.js['"]\)/);
+  assert.match(loader, /addEventListener\('pointerdown'/);
+  assert.match(loader, /addEventListener\('focus'/);
+  assert.match(loader, /addEventListener\('click',[\s\S]*?true\)/);
+});
+
+test('homepage preconnects to Firestore while keeping font stylesheet non-blocking', () => {
+  const html = read('index.html');
+  assert.match(html, /rel="preconnect" href="https:\/\/firestore\.googleapis\.com"/);
+  assert.match(html, /rel="dns-prefetch" href="\/\/fonts\.googleapis\.com"/);
+  assert.match(html, /fonts\.gstatic\.com/);
+  assert.match(html, /rel="preconnect" href="https:\/\/cdn\.plyr\.io"/);
+});
+
+test('site image CDN URLs are pinned to an immutable repository commit', () => {
+  const commit = '16d8001cfeaaf7e87811f94162c9e3c7986d1c79';
+  for (const page of ['index.html', 'catalog.html', 'title.html', 'tracker.html', 'info.html']) {
+    const html = read(page);
+    assert.match(html, new RegExp('cdn\\.jsdelivr\\.net/gh/l3towm-byte/image@' + commit));
+    assert.doesNotMatch(html, /cdn\.jsdelivr\.net\/gh\/l3towm-byte\/image\//);
   }
 });
