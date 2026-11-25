@@ -1,16 +1,10 @@
-# Deploy the static site to GitHub Pages after a JavaScript syntax check.
-# Every run also refreshes data/*.json (episodes, titles, ...) from Firestore, so visitors
-# do not have to read Firestore themselves. See scripts/build-site.mjs.
+
+# Deploy the static site to Pages after a JavaScript syntax check.
+# The workflow runs only when started manually.
 name: Deploy static content to Pages
 
 on:
-  push:
-    branches: ["main"]
   workflow_dispatch:
-  # Refresh the data snapshot. Each run reads every document of the episodes/titles/torrent_packs
-  # collections once, so keep the interval in line with the Firestore free quota (50k reads/day).
-  schedule:
-    - cron: "7,37 * * * *"
 
 permissions:
   contents: read
